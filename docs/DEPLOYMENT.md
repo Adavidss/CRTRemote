@@ -46,7 +46,19 @@ Both deployments are worth having:
 ## GitHub Pages
 
 `.github/workflows/deploy.yml` builds on every push to `main` and publishes
-`dist/`. Enable Pages for the repository with **Source: GitHub Actions**.
+`dist/`.
+
+**One-time setup:** Settings → Pages → Source: **GitHub Actions**. Until that is
+done the workflow fails at `configure-pages` with *"Get Pages site failed"*. It
+cannot be automated — the workflow's default token is not granted the
+administration rights needed to create a Pages site, so `enablement: true` fails
+with a less helpful error rather than working. Equivalent from the command line:
+
+```bash
+gh api -X POST repos/<owner>/CRTRemote/pages -f build_type=workflow
+```
+
+Re-run the failed workflow afterwards, or push again.
 
 Two settings that matter:
 
