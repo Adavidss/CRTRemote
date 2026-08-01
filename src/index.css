@@ -1,0 +1,321 @@
+@import "tailwindcss";
+
+/* ================================================================== *
+ * CRT Remote — design tokens
+ *
+ * The brief was a consumer device, not a control panel, and the whole
+ * difference lives in this file: one accent, a lot of near-black, and
+ * hairlines instead of boxes. Everything is a CSS variable so the theme
+ * picker is a single attribute on <html> rather than a class sprayed
+ * through every component.
+ *
+ * Surfaces get *lighter* as they come forward, and every one of them is
+ * slightly blue-black rather than neutral — a true #000 next to an OLED
+ * phone's own black reads as a hole in the screen.
+ * ================================================================== */
+
+:root {
+  /* Surfaces */
+  --bg: #08090c;
+  --bg-2: #0b0d11;
+  --surface: #131620;
+  --surface-2: #1a1e2b;
+  --surface-3: #232838;
+  --hairline: #ffffff14;
+  --hairline-strong: #ffffff24;
+
+  /* Ink */
+  --ink: #f2f4f8;
+  --ink-2: #a9b0c0;
+  --ink-3: #6b7280;
+  --ink-4: #454b59;
+
+  /* Accent — the one colour that carries meaning. */
+  --accent: #5ef0a8;
+  --accent-2: #2fd489;
+  --accent-ink: #04140c;
+  --accent-soft: #5ef0a81f;
+  --accent-glow: #5ef0a840;
+
+  --danger: #ff6b6b;
+  --warn: #ffc46b;
+  --ok: var(--accent);
+
+  --radius-sm: 10px;
+  --radius: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+
+  /* One easing for everything that moves, so the whole app feels like one
+     object. Slight overshoot — it is what makes a tap feel mechanical. */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="amber"] {
+  --accent: #ffb545;
+  --accent-2: #f59a1f;
+  --accent-ink: #1a1002;
+  --accent-soft: #ffb5451f;
+  --accent-glow: #ffb54540;
+}
+
+:root[data-theme="ice"] {
+  --accent: #7cc4ff;
+  --accent-2: #3ba0f0;
+  --accent-ink: #041420;
+  --accent-soft: #7cc4ff1f;
+  --accent-glow: #7cc4ff40;
+}
+
+:root[data-theme="magenta"] {
+  --accent: #ff7ad9;
+  --accent-2: #ef4ac2;
+  --accent-ink: #1b0417;
+  --accent-soft: #ff7ad91f;
+  --accent-glow: #ff7ad940;
+}
+
+/* A monochrome theme, for anyone who wants the phone to match the tube. */
+:root[data-theme="mono"] {
+  --accent: #e8e8ee;
+  --accent-2: #b8b8c4;
+  --accent-ink: #0a0a0c;
+  --accent-soft: #ffffff14;
+  --accent-glow: #ffffff30;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(120% 60% at 50% -10%, #171b26 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 45%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* A remote is a fixed surface, not a document: nothing rubber-bands and
+     nothing gets selected by a slightly-too-long press. */
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* ---------- typography ---------- */
+
+.t-display {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  line-height: 1.1;
+}
+
+.t-title {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.018em;
+}
+
+.t-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.t-body {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.t-mono {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Numbers that change every second must not reflow the layout around them. */
+.t-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- surfaces ---------- */
+
+.card {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  /* The top hairline catches light like a bevel; without it a dark card on a
+     dark background has no edge at all on an OLED panel. */
+  box-shadow:
+    inset 0 1px 0 0 #ffffff10,
+    0 1px 2px #00000060,
+    0 8px 24px -12px #00000090;
+}
+
+.card-flat {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+}
+
+.glass {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid var(--hairline);
+}
+
+/* ---------- interaction ---------- */
+
+/* Every tappable thing uses this. A press is a scale, not a colour change:
+   colour changes read as state, and most taps are not state. */
+.pressable {
+  transition:
+    transform 0.16s var(--ease-spring),
+    background-color 0.18s var(--ease),
+    border-color 0.18s var(--ease),
+    opacity 0.18s var(--ease);
+}
+
+.pressable:active {
+  transform: scale(0.965);
+}
+
+.pressable:disabled,
+.pressable[aria-disabled="true"] {
+  opacity: 0.42;
+  transform: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- motion ---------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.animate-rise {
+  animation: rise 0.34s var(--ease) both;
+}
+
+.animate-pulse-dot {
+  animation: pulse-dot 1.9s ease-in-out infinite;
+}
+
+.animate-sheet-in {
+  animation: sheet-in 0.32s var(--ease) both;
+}
+
+/* The shimmer on a loading tile. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #ffffff0e, transparent);
+  animation: sweep 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .pressable:active {
+    transform: none;
+  }
+}
+
+/* ---------- layout helpers ---------- */
+
+/* The notch and the home indicator. Every fixed edge pays these back. */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.scroll-area {
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scroll-area::-webkit-scrollbar {
+  display: none;
+}
+
+/* A hairline that fades at both ends — a full-width rule looks like a table. */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hairline-strong) 12%, var(--hairline-strong) 88%, transparent);
+}
