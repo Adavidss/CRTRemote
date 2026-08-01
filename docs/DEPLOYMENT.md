@@ -62,11 +62,14 @@ Re-run the failed workflow afterwards, or push again.
 
 Two settings that matter:
 
-- **`base: "/CRTRemote/"`** in `vite.config.ts` — a project site is served from
-  a subdirectory, and an absolute base would 404 every asset.
+- **`base: "./"`** in `vite.config.ts` — a *relative* base, so one build works
+  from every mount point: `/CRTRemote/` on Pages, `/remote/` when the relay is
+  serving it, and `file://`. An absolute base would pin it to one and 404 every
+  asset in the others.
 - **Hash routing.** `#/games` survives a hard refresh; `/games` would 404,
   because Pages has no rewrite rule to send unknown paths back to `index.html`.
-  That is why there is a small hash router here rather than a history one.
+  It is also what makes the relative base viable — the hash leaves the document
+  path alone, so relative asset URLs keep resolving.
 
 ## Installing to the home screen
 

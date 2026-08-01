@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRoute } from "@/router.ts";
-import { applyConnection } from "@/state/connection.ts";
+import { applyConnection, autoConfigure } from "@/state/connection.ts";
 import { applyTheme, useSettings } from "@/state/settings.ts";
 import { useKeepAwake } from "@/hooks/useKeepAwake.ts";
 import { BottomNav } from "@/components/BottomNav.tsx";
@@ -23,7 +23,12 @@ export default function App() {
   }, [settings.theme]);
 
   useEffect(() => {
-    void applyConnection();
+    // `autoConfigure` writes settings when it finds a relay, which triggers a
+    // connect through the settings subscription — so only connect here when it
+    // did not, or the first attempt would be against the stale defaults.
+    void autoConfigure().then((configured) => {
+      if (!configured) void applyConnection();
+    });
   }, []);
 
   useKeepAwake(settings.keepAwake);

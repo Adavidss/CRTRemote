@@ -59,6 +59,22 @@ const DEFAULTS: RemoteSettings = {
 
 const STORAGE_KEY = "crtremote:settings";
 
+/**
+ * Whether this device has ever been configured.
+ *
+ * Used to decide if the relay may be auto-detected on first run. Once the user
+ * has chosen anything, their choice stands — silently repointing a remote at a
+ * different CRT because it happened to answer would be worse than an
+ * unconfigured one.
+ */
+export function hasStoredSettings(): boolean {
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
 function load(): RemoteSettings {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);

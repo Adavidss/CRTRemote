@@ -1,10 +1,18 @@
 import type { RemoteCommand, Transport } from "@/protocol";
 import { HostConnection } from "@/services/HostConnection.ts";
 import { SimulatedHost } from "@/services/simulator/SimulatedHost.ts";
+import { discoverRelayFromOrigin } from "@/services/transports/discovery.ts";
 import { HttpPollingTransport } from "@/services/transports/HttpPollingTransport.ts";
 import { LoopbackTransport } from "@/services/transports/LoopbackTransport.ts";
 import { WebSocketTransport } from "@/services/transports/WebSocketTransport.ts";
-import { relayUrls, settingsStore, type ConnectionMode, type RemoteSettings } from "./settings.ts";
+import {
+  hasStoredSettings,
+  relayUrls,
+  settingsStore,
+  updateSettings,
+  type ConnectionMode,
+  type RemoteSettings,
+} from "./settings.ts";
 import { useStore } from "@/utils/store.ts";
 
 /**
@@ -64,6 +72,40 @@ export async function applyConnection(force = false): Promise<void> {
   }
 
   await connection.connect(buildTransport(settings));
+}
+
+/**
+ * Point at the relay that served this page, if one did.
+ *
+ * When the relay on the Raspberry Pi is serving this app, its address is the
+ * page's own origin — so opening the URL is the entire setup, and nobody has to
+ * find out their Pi's IP address. Only ever applied on a device that has never
+ * been configured; after that the user's choice wins.
+ *
+ * Returns true if it changed anything.
+ */
+export async function autoConfigure(): Promise<boolean> {
+  if (hasStoredSettings()) return false;
+  const relay = await discoverRelayFromOrigin();
+  if (!relay) return false;
+  updateSettings({
+    connectionMode: "websocket",
+    hostAddress: relay.host,
+    hostPort: relay.port,
+  });
+  return true;
+}
+
+/** Detect on demand, from the settings screen. Overwrites what is there. */
+export async function detectRelay(): Promise<boolean> {
+  const relay = await discoverRelayFromOrigin();
+  if (!relay) return false;
+  updateSettings({
+    connectionMode: "websocket",
+    hostAddress: relay.host,
+    hostPort: relay.port,
+  });
+  return true;
 }
 
 // A change of host or mode reconnects; a change of theme does not.

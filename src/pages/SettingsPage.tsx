@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { PreviewMode } from "@/protocol";
-import { applyConnection, connectionModeLabel, send, useConnection } from "@/state/connection.ts";
+import { applyConnection, connectionModeLabel, detectRelay, send, useConnection } from "@/state/connection.ts";
+import { probeRelay } from "@/services/transports/discovery.ts";
 import {
   isMixedContentBlocked,
   THEME_LABELS,
@@ -29,6 +30,9 @@ export function SettingsPage() {
   const [editingHost, setEditingHost] = useState(false);
   const [addressDraft, setAddressDraft] = useState(settings.hostAddress);
   const [portDraft, setPortDraft] = useState(String(settings.hostPort));
+  const [detecting, setDetecting] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<string | null>(null);
 
   const mixedContent = isMixedContentBlocked();
 
@@ -75,7 +79,39 @@ export function SettingsPage() {
             </Button>
           </Row>
         ) : null}
+
+        {/* When this page was served by the relay, the relay is simply where
+            the page came from — so "find it" is one request, not a scan. */}
+        <Row
+          label="Find the CRT"
+          detail={
+            detecting
+              ? "Looking…"
+              : mixedContent
+                ? "Not possible over HTTPS"
+                : "Use whatever served this page"
+          }
+          icon="link"
+        >
+          <Button
+            size="sm"
+            busy={detecting}
+            disabled={mixedContent}
+            onClick={() => {
+              setDetecting(true);
+              void detectRelay()
+                .then((found) => {
+                  setTestResult(found ? null : "No CRT answered at this address.");
+                })
+                .finally(() => setDetecting(false));
+            }}
+          >
+            Detect
+          </Button>
+        </Row>
       </RowGroup>
+
+      {testResult ? <p className="px-1 text-[12px] text-[var(--warn)]">{testResult}</p> : null}
 
       {mixedContent && settings.connectionMode !== "simulator" ? (
         <p className="rounded-[var(--radius)] border border-[var(--warn)]/30 bg-[var(--warn)]/8 px-4 py-3 text-[13px] leading-relaxed text-[var(--warn)]">
@@ -284,6 +320,31 @@ export function SettingsPage() {
             placeholder="7890"
           />
         </div>
+        {/* Testing before committing turns a wrong address from "nothing works
+            and I do not know why" into one line of feedback. */}
+        <Button
+          size="sm"
+          icon="link"
+          busy={testing}
+          className="mt-3"
+          onClick={() => {
+            setTesting(true);
+            setTestResult(null);
+            void probeRelay(addressDraft, Number(portDraft) || 7890)
+              .then((status) => {
+                setTestResult(
+                  status
+                    ? `Found a relay — ${status.hosts ?? 0} CRT, ${status.remotes ?? 0} remote(s) connected.`
+                    : "Nothing answered there.",
+                );
+              })
+              .finally(() => setTesting(false));
+          }}
+        >
+          Test this address
+        </Button>
+        {testResult ? <p className="mt-2 text-[12px] text-[var(--ink-2)]">{testResult}</p> : null}
+
         <div className="mt-4 flex gap-3">
           <Button tone="plain" size="lg" fullWidth onClick={() => setEditingHost(false)}>
             Cancel
@@ -296,8 +357,10 @@ export function SettingsPage() {
               updateSettings({
                 hostAddress: addressDraft.trim() || "crt.local",
                 hostPort: Number(portDraft) || 7890,
+                connectionMode: settings.connectionMode === "simulator" ? "websocket" : settings.connectionMode,
               });
               setEditingHost(false);
+              setTestResult(null);
               void applyConnection(true);
             }}
           >

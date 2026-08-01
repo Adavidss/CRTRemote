@@ -68,14 +68,27 @@ src/components/  the design system
 
 ## Connecting to a real CRT
 
-Settings → Connection → WebSocket, then the relay's address.
+From CRTHost, with both repos cloned side by side:
 
-One thing to know first: **a page served over HTTPS cannot open `ws://` or
+```bash
+npm --prefix ../CRTHost run serve
+```
+
+That builds both and serves them from one process, printing the address to open
+on your phone. **No configuration is needed** — this app notices it was served
+by the relay and points itself at the same address. Anything you choose by hand
+afterwards is remembered and wins.
+
+The one thing to know: **a page served over HTTPS cannot open `ws://` or
 `http://`**. GitHub Pages forces HTTPS, so the hosted build is simulator-only by
-construction. To control a real CRT, open this app from the relay itself, which
-serves it over plain HTTP on your network. The settings screen detects the case
-and says so rather than letting the connection fail with a network error nobody
-can act on. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+construction, and the phone must load this app from the relay instead. The
+settings screen detects the case and says so rather than letting the connection
+fail with a network error nobody can act on. See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+To point at a relay by hand: Settings → Connection → WebSocket, then the
+address. **Detect** reuses the page's own origin, and **Test this address**
+checks one you typed before committing to it.
 
 ## Scripts
 

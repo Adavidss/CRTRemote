@@ -3,9 +3,15 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { fileURLToPath, URL } from "node:url";
 
-// Deployed as a GitHub Pages project site. Routing is hash-based so a deep
-// link survives a hard refresh without Pages needing a 404 rewrite.
-const BASE = "/CRTRemote/";
+// A *relative* base, so one build works from every mount point this app is
+// served from: `/CRTRemote/` on GitHub Pages, `/remote/` when the relay on the
+// Raspberry Pi is serving it, and `file://` if you just open the folder. An
+// absolute base would pin it to one of those and 404 every asset in the others.
+//
+// This only works because routing is hash-based: `#/games` leaves the document
+// path alone, so relative asset URLs keep resolving. A history router would
+// need the absolute base back.
+const BASE = "./";
 
 export default defineConfig({
   base: BASE,
