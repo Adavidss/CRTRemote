@@ -14,6 +14,11 @@ this app's connection to **This browser** and the host's link to **CRTRemote in
 another tab** — both sites publish under one origin, so they talk over a
 `BroadcastChannel`.
 
+To drive a CRT that is somewhere else entirely, use **Public relay** and enter
+the URL and pairing code the host shows. That needs CRTHost's `worker/` deployed
+to Cloudflare once; the alternative, for a phone on the same Wi-Fi as the CRT, is
+to open this app from the relay the host is already running.
+
 ```bash
 npm install
 npm run dev          # http://localhost:3120

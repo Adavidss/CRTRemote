@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { PreviewMode } from "@/protocol";
 import { applyConnection, connectionModeLabel, detectRelay, send, useConnection } from "@/state/connection.ts";
 import { probeRelay } from "@/services/transports/discovery.ts";
+import { normaliseRoomCode } from "@/services/transports/cloudRelay.ts";
 import {
   isMixedContentBlocked,
   THEME_LABELS,
@@ -48,6 +49,7 @@ export function SettingsPage() {
           <Segmented<ConnectionMode>
             options={[
               { value: "simulator", label: "Simulator" },
+              { value: "cloud", label: "Public relay" },
               { value: "broadcast", label: "This browser" },
               { value: "websocket", label: "WebSocket" },
               { value: "http", label: "HTTP" },
@@ -58,13 +60,58 @@ export function SettingsPage() {
           <p className="mt-2 text-[12px] text-[var(--ink-4)]">
             {settings.connectionMode === "simulator"
               ? "A simulated CRT runs inside this page. Nothing leaves the device."
-              : settings.connectionMode === "broadcast"
-                ? "Drives a real CRTHost open in another tab of this browser. No relay, no network — but the same machine only."
-                : settings.connectionMode === "websocket"
-                  ? "Preferred. One socket, pushed both ways."
-                  : "Fallback for networks that block WebSockets. Slower, and previews suffer."}
+              : settings.connectionMode === "cloud"
+                ? "Meets the CRT at a relay on the internet, so this phone does not have to be on its network."
+                : settings.connectionMode === "broadcast"
+                  ? "Drives a real CRTHost open in another tab of this browser. No relay, no network — but the same machine only."
+                  : settings.connectionMode === "websocket"
+                    ? "Preferred. One socket, pushed both ways."
+                    : "Fallback for networks that block WebSockets. Slower, and previews suffer."}
           </p>
         </div>
+
+        {settings.connectionMode === "cloud" ? (
+          <div className="px-4 py-3">
+            <label className="mb-3 block">
+              <span className="t-label mb-1 block">Relay URL</span>
+              <input
+                value={settings.cloudRelayUrl}
+                onChange={(event) => updateSettings({ cloudRelayUrl: event.target.value })}
+                placeholder="https://crt-relay.your-name.workers.dev"
+                inputMode="url"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                className="w-full border border-[var(--hairline)] bg-[var(--surface-2)] px-3 py-2 text-[13px] text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
+
+            <label className="block">
+              <span className="t-label mb-1 block">Code from the CRT</span>
+              <input
+                value={settings.cloudRoom}
+                onChange={(event) => {
+                  // Store the canonical form once it is complete, so a code
+                  // read aloud and typed in lower case still matches.
+                  const code = normaliseRoomCode(event.target.value);
+                  updateSettings({ cloudRoom: code ?? event.target.value.toUpperCase() });
+                }}
+                placeholder="ABCD-2345"
+                spellCheck={false}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                maxLength={9}
+                className="w-full border border-[var(--hairline)] bg-[var(--surface-2)] px-3 py-2 text-[17px] tracking-[0.25em] text-[var(--ink)] outline-none focus:border-[var(--accent)]"
+              />
+            </label>
+
+            <p className="mt-2 text-[12px] text-[var(--ink-4)]">
+              {normaliseRoomCode(settings.cloudRoom)
+                ? "Anyone with this code can drive the CRT. Ask the host for a new one to revoke it."
+                : "On the CRT, open Connect a remote → From anywhere, and read off the code."}
+            </p>
+          </div>
+        ) : null}
 
         {needsRelay ? (
           <Row

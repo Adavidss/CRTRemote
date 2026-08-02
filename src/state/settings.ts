@@ -34,7 +34,7 @@ function isTheme(value: unknown): value is Theme {
   return typeof value === "string" && (THEMES as readonly string[]).includes(value);
 }
 
-export type ConnectionMode = "simulator" | "broadcast" | "websocket" | "http";
+export type ConnectionMode = "simulator" | "broadcast" | "cloud" | "websocket" | "http";
 
 export interface RemoteSettings {
   theme: Theme;
@@ -42,6 +42,14 @@ export interface RemoteSettings {
   /** Hostname or IP of the relay. `crt.local` if mDNS is working. */
   hostAddress: string;
   hostPort: number;
+  /** Base URL of the public relay, for pairing across networks. */
+  cloudRelayUrl: string;
+  /**
+   * The room code the host is showing. Not a password chosen by anyone — the
+   * relay issues it — but it is the only thing guarding the CRT, so it lives
+   * only on the device that was told it.
+   */
+  cloudRoom: string;
   /** Haptic feedback on every control that changes something. */
   haptics: boolean;
   /** Ask the browser to keep the screen on while the remote is open. */
@@ -60,6 +68,8 @@ const DEFAULTS: RemoteSettings = {
   connectionMode: "simulator",
   hostAddress: "crt.local",
   hostPort: 7890,
+  cloudRelayUrl: "",
+  cloudRoom: "",
   haptics: true,
   keepAwake: true,
   showPreviewOnHome: true,

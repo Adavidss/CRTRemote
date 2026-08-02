@@ -2,6 +2,7 @@ import type { RemoteCommand, Transport } from "@/protocol";
 import { HostConnection } from "@/services/HostConnection.ts";
 import { SimulatedHost } from "@/services/simulator/SimulatedHost.ts";
 import { BroadcastChannelTransport } from "@/services/transports/BroadcastChannelTransport.ts";
+import { cloudSocketUrl } from "@/services/transports/cloudRelay.ts";
 import { discoverRelayFromOrigin } from "@/services/transports/discovery.ts";
 import { HttpPollingTransport } from "@/services/transports/HttpPollingTransport.ts";
 import { LoopbackTransport } from "@/services/transports/LoopbackTransport.ts";
@@ -36,6 +37,9 @@ function keyFor(settings: RemoteSettings): string {
   // transport every time the user edited a host they are not using.
   if (settings.connectionMode === "simulator") return "simulator";
   if (settings.connectionMode === "broadcast") return "broadcast";
+  if (settings.connectionMode === "cloud") {
+    return `cloud:${settings.cloudRelayUrl}:${settings.cloudRoom}`;
+  }
   return `${settings.connectionMode}:${settings.hostAddress}:${settings.hostPort}`;
 }
 
@@ -45,6 +49,15 @@ function buildTransport(settings: RemoteSettings): Transport {
 
   if (settings.connectionMode === "broadcast") {
     return new BroadcastChannelTransport({ role: "remote", clientId });
+  }
+
+  if (settings.connectionMode === "cloud") {
+    return new WebSocketTransport({
+      url: cloudSocketUrl({ relayUrl: settings.cloudRelayUrl, room: settings.cloudRoom }),
+      role: "remote",
+      clientId,
+      clientName: connection.getClientInfo().name,
+    });
   }
 
   if (settings.connectionMode === "websocket") {
@@ -138,6 +151,8 @@ export function connectionModeLabel(mode: ConnectionMode): string {
       return "Simulator";
     case "broadcast":
       return "Same browser";
+    case "cloud":
+      return "Public relay";
     case "websocket":
       return "WebSocket";
     case "http":
