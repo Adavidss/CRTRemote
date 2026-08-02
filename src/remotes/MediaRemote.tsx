@@ -64,10 +64,10 @@ export function MediaRemote({ state }: { state: HostState }) {
             }}
             aria-label="Position"
             className="h-6 w-full cursor-pointer appearance-none bg-transparent
-              [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[var(--surface-3)]
-              [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--accent)]
-              [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[var(--surface-3)]
-              [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--accent)]"
+              [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-none [&::-webkit-slider-runnable-track]:bg-[var(--surface-3)]
+              [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-none [&::-webkit-slider-thumb]:bg-[var(--accent)]
+              [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-none [&::-moz-range-track]:bg-[var(--surface-3)]
+              [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-none [&::-moz-range-thumb]:bg-[var(--accent)]"
             style={{
               background: `linear-gradient(to right, var(--accent) ${progress * 100}%, transparent ${progress * 100}%)`,
               backgroundSize: "100% 6px",
@@ -90,7 +90,7 @@ export function MediaRemote({ state }: { state: HostState }) {
               haptic("confirm");
               send({ type: "media.control", action: "toggle" });
             }}
-            className="pressable focus-ring flex h-[68px] w-[68px] items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-ink)] shadow-[0_0_0_6px_var(--accent-soft)]"
+            className="pressable focus-ring flex h-[68px] w-[68px] items-center justify-center rounded-none bg-[var(--accent)] text-[var(--accent-ink)]"
           >
             <Icon name={media.playing ? "pause" : "play"} size={28} filled={!media.playing} />
           </button>
@@ -121,10 +121,10 @@ export function MediaRemote({ state }: { state: HostState }) {
             }
             aria-label="Volume"
             className="h-6 flex-1 cursor-pointer appearance-none bg-transparent
-              [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[var(--surface-3)]
-              [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--ink)]
-              [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[var(--surface-3)]
-              [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--ink)]"
+              [&::-webkit-slider-runnable-track]:h-1.5 [&::-webkit-slider-runnable-track]:rounded-none [&::-webkit-slider-runnable-track]:bg-[var(--surface-3)]
+              [&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-none [&::-webkit-slider-thumb]:bg-[var(--ink)]
+              [&::-moz-range-track]:h-1.5 [&::-moz-range-track]:rounded-none [&::-moz-range-track]:bg-[var(--surface-3)]
+              [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-none [&::-moz-range-thumb]:bg-[var(--ink)]"
           />
           <span className="t-tabular w-9 text-right text-[12px] text-[var(--ink-3)]">
             {Math.round((media.muted ? 0 : media.volume) * 100)}
@@ -168,7 +168,7 @@ function RoundKey({ icon, label, onPress }: { icon: "next" | "previous"; label: 
         onPress();
       }}
       className={cn(
-        "pressable focus-ring flex h-14 w-14 items-center justify-center rounded-full border border-[var(--hairline)] bg-[var(--surface-2)] text-[var(--ink)]",
+        "pressable focus-ring flex h-14 w-14 items-center justify-center rounded-none border border-[var(--hairline)] bg-[var(--surface-2)] text-[var(--ink)]",
       )}
     >
       <Icon name={icon} size={22} />

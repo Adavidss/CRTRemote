@@ -51,7 +51,7 @@ export function PetRemote({ state }: { state: HostState }) {
         <div className="flex items-start gap-3">
           <span
             className={cn(
-              "flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px]",
+              "flex h-14 w-14 shrink-0 items-center justify-center rounded-none",
               pet.sick ? "bg-[var(--danger)]/12 text-[var(--danger)]" : "bg-[var(--accent-soft)] text-[var(--accent)]",
             )}
           >

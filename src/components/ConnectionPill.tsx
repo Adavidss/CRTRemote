@@ -46,13 +46,13 @@ export function ConnectionPill({ compact }: { compact?: boolean }) {
         navigate("settings");
       }}
       className={cn(
-        "pressable focus-ring inline-flex items-center gap-2 rounded-full border border-[var(--hairline)] bg-[var(--surface-2)] px-3 py-1.5",
+        "pressable focus-ring inline-flex items-center gap-2 rounded-none border border-[var(--hairline)] bg-[var(--surface-2)] px-3 py-1.5",
         compact && "px-2.5 py-1",
       )}
     >
       <span
         className={cn(
-          "h-2 w-2 rounded-full",
+          "h-2 w-2 rounded-none",
           status === "connected"
             ? simulated
               ? "bg-[var(--warn)]"

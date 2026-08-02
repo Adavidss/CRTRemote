@@ -149,13 +149,13 @@ export function SettingsPage() {
                     key={palette.id}
                     type="button"
                     onClick={() => send({ type: "display.setPalette", paletteId: palette.id })}
-                    className={`pressable focus-ring flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] ${
+                    className={`pressable focus-ring flex items-center gap-2 rounded-none border px-3 py-1.5 text-[12px] ${
                       palette.id === state.display.paletteId
                         ? "border-[var(--accent)] text-[var(--ink)]"
                         : "border-[var(--hairline)] text-[var(--ink-3)]"
                     }`}
                   >
-                    <span className="flex overflow-hidden rounded-full">
+                    <span className="flex overflow-hidden rounded-none">
                       {palette.swatch.map((colour) => (
                         <span key={colour} className="h-3 w-2" style={{ background: colour }} />
                       ))}
@@ -381,25 +381,31 @@ function ThemeSwatch({
   selected: boolean;
   onSelect: () => void;
 }) {
-  // Rendered with the theme's own accent so the choice shows its result rather
-  // than its name.
-  const accent: Record<Theme, string> = {
-    phosphor: "#5ef0a8",
-    amber: "#ffb545",
-    ice: "#7cc4ff",
-    magenta: "#ff7ad9",
-    mono: "#e8e8ee",
+  // Each swatch is the phosphor's own ramp rather than one dot of its accent:
+  // these themes are defined by how their steps are spaced, so showing three
+  // rungs tells you what you are choosing in a way a single colour cannot.
+  const ramp: Record<Theme, [string, string, string]> = {
+    "p4-mono": ["#64666a", "#c0c3c8", "#eceef2"],
+    "p1-green": ["#206830", "#60d870", "#b8f8b0"],
+    "p3-amber": ["#784c10", "#f0a830", "#f8d890"],
+    "p7-blue": ["#4d6180", "#b0c8e8", "#dbe6f5"],
+    ember: ["#8a3a3c", "#f39c4a", "#ecdcb0"],
+    seafoam: ["#1f6f5f", "#6fd39b", "#d6ecdf"],
   };
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`pressable focus-ring flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] ${
+      className={`pressable focus-ring flex items-center gap-2 border px-3 py-1.5 text-[12px] ${
         selected ? "border-[var(--accent)] text-[var(--ink)]" : "border-[var(--hairline)] text-[var(--ink-3)]"
       }`}
     >
-      <span className="h-3.5 w-3.5 rounded-full" style={{ background: accent[theme] }} />
+      <span className="flex h-3.5">
+        {ramp[theme].map((step) => (
+          <span key={step} className="w-2" style={{ background: step }} />
+        ))}
+      </span>
       {THEME_LABELS[theme]}
       {selected ? <Icon name="check" size={13} className="text-[var(--accent)]" /> : null}
     </button>

@@ -58,7 +58,7 @@ export function GameCard({
               onPlay();
             }}
             className={cn(
-              "pressable focus-ring inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-semibold",
+              "pressable focus-ring inline-flex h-9 items-center gap-1.5 rounded-none px-4 text-[13px] font-semibold",
               active
                 ? "bg-[var(--surface-3)] text-[var(--ink)]"
                 : "bg-[var(--accent)] text-[var(--accent-ink)]",
@@ -89,23 +89,27 @@ export function Cover({ game, size = 76 }: { game: GameEntry; size?: number }) {
       <img
         src={game.cover}
         alt=""
-        className="shrink-0 rounded-[12px] object-cover"
+        className="shrink-0 rounded-none object-cover"
         style={{ width: size, height: size * 1.32, imageRendering: "pixelated" }}
       />
     );
   }
 
   const seed = hashString(game.title);
-  // Different slices of the hash, so hue and pattern vary independently rather
-  // than moving together.
-  const hue = (seed >>> 8) % 360;
+  // Two slices of the hash, so the brightness and the pattern vary
+  // independently rather than moving together.
+  //
+  // Generated covers are drawn in the theme's own phosphor, separated by
+  // *brightness* rather than hue — a shelf of hue-coded boxes would be the one
+  // thing on this screen that could not exist on the set it controls.
   const family = seed % 4;
-  const ink = `hsl(${hue} 62% 68%)`;
-  const back = `hsl(${hue} 34% 16%)`;
+  const level = 62 + ((seed >>> 8) % 4) * 9;
+  const ink = `color-mix(in srgb, var(--accent) ${level}%, var(--ink))`;
+  const back = "var(--surface-2)";
 
   return (
     <div
-      className="relative shrink-0 overflow-hidden rounded-[12px] border border-[var(--hairline)]"
+      className="relative shrink-0 overflow-hidden rounded-none border border-[var(--hairline)]"
       style={{ width: size, height: size * 1.32, background: back }}
       aria-hidden="true"
     >
@@ -152,12 +156,12 @@ export function Cover({ game, size = 76 }: { game: GameEntry; size?: number }) {
                 ))}
       </svg>
 
-      <span className="absolute inset-x-0 bottom-0 truncate bg-black/65 px-1.5 py-1 text-[9px] font-semibold tracking-wide text-white/90 backdrop-blur-sm">
+      <span className="absolute inset-x-0 bottom-0 truncate bg-black/65 px-1.5 py-1 text-[9px] font-semibold tracking-wide text-white/90">
         {game.title.split(" ")[0].toUpperCase()}
       </span>
 
       {!game.playable ? (
-        <span className="absolute right-1 top-1 rounded-full bg-black/70 p-1 text-[var(--ink-3)]">
+        <span className="absolute right-1 top-1 rounded-none bg-black/70 p-1 text-[var(--ink-3)]">
           <Icon name="close" size={10} />
         </span>
       ) : null}

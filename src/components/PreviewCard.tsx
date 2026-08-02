@@ -63,14 +63,14 @@ export function PreviewCard({ showControls = true }: { showControls?: boolean })
         {/* Bottom-right: the CRT puts its own titles top-left and its hint bar
             bottom-left, so this is the one corner a badge never covers. */}
         {stale && mode !== "off" ? (
-          <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-2.5 py-1 text-[11px] text-[var(--warn)] backdrop-blur">
+          <span className="absolute bottom-3 right-3 rounded-none bg-black/70 px-2.5 py-1 text-[11px] text-[var(--warn)]">
             Feed stalled
           </span>
         ) : null}
 
         {mode !== "off" && preview && !stale ? (
-          <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[11px] text-[var(--ink-2)] backdrop-blur">
-            <span className="animate-pulse-dot h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+          <span className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-none bg-black/60 px-2.5 py-1 text-[11px] text-[var(--ink-2)]">
+            <span className="animate-pulse-dot h-1.5 w-1.5 rounded-none bg-[var(--accent)]" />
             Live
           </span>
         ) : null}

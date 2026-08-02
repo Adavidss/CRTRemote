@@ -28,7 +28,7 @@ export function Toasts() {
           type="button"
           onClick={() => connection.dismissNotice(notice.id)}
           className={cn(
-            "animate-rise pointer-events-auto flex max-w-md items-center gap-2.5 rounded-full border border-[var(--hairline)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-4 py-2.5 text-[13px] shadow-[0_8px_28px_-10px_#000] backdrop-blur-xl",
+            "animate-rise pointer-events-auto flex max-w-md items-center gap-2.5 rounded-none border border-[var(--hairline)] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] px-4 py-2.5 text-[13px]",
             notice.level === "error" && "text-[var(--danger)]",
             notice.level === "warn" && "text-[var(--warn)]",
             notice.level === "success" && "text-[var(--accent)]",

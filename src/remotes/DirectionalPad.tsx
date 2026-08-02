@@ -47,7 +47,7 @@ export function DirectionalPad({
           icon="chevron-left"
         />
         <div className="flex items-center justify-center">
-          <span className="h-2 w-2 rounded-full bg-[var(--ink-4)]" />
+          <span className="h-2 w-2 rounded-none bg-[var(--ink-4)]" />
         </div>
         <PadButton
           label="Right"
@@ -77,7 +77,7 @@ export function DirectionalPad({
               type="button"
               onClick={() => press(button)}
               className={cn(
-                "pressable focus-ring flex h-16 w-16 items-center justify-center rounded-full text-[18px] font-bold",
+                "pressable focus-ring flex h-16 w-16 items-center justify-center rounded-none text-[18px] font-bold",
                 button === "a"
                   ? "bg-[var(--accent)] text-[var(--accent-ink)]"
                   : "border border-[var(--hairline)] bg-[var(--surface-2)] text-[var(--ink)]",
@@ -101,7 +101,7 @@ function SmallKey({ label, onPress }: { label: string; onPress: () => void }) {
     <button
       type="button"
       onClick={onPress}
-      className="pressable focus-ring rounded-full border border-[var(--hairline)] bg-[var(--surface-2)] px-3.5 py-2 text-[12px] font-medium text-[var(--ink-2)]"
+      className="pressable focus-ring rounded-none border border-[var(--hairline)] bg-[var(--surface-2)] px-3.5 py-2 text-[12px] font-medium text-[var(--ink-2)]"
     >
       {label}
     </button>
@@ -115,14 +115,14 @@ export function SystemKeys() {
       <button
         type="button"
         onClick={() => press("select")}
-        className="pressable focus-ring flex-1 rounded-full border border-[var(--hairline)] bg-[var(--surface-2)] py-2.5 text-[13px] text-[var(--ink-2)]"
+        className="pressable focus-ring flex-1 rounded-none border border-[var(--hairline)] bg-[var(--surface-2)] py-2.5 text-[13px] text-[var(--ink-2)]"
       >
         Select
       </button>
       <button
         type="button"
         onClick={() => press("start")}
-        className="pressable focus-ring flex-1 rounded-full border border-[var(--hairline)] bg-[var(--surface-2)] py-2.5 text-[13px] text-[var(--ink-2)]"
+        className="pressable focus-ring flex-1 rounded-none border border-[var(--hairline)] bg-[var(--surface-2)] py-2.5 text-[13px] text-[var(--ink-2)]"
       >
         Start
       </button>

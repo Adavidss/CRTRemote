@@ -64,11 +64,11 @@ export function HomePage() {
       <section className="card p-4">
         <div className="flex items-center gap-3">
           <span
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px]"
-            style={{
-              background: computerMode ? "var(--surface-3)" : `hsl(${active?.hue ?? 210} 72% 62%)1f`,
-              color: computerMode ? "var(--ink-2)" : `hsl(${active?.hue ?? 210} 72% 62%)`,
-            }}
+            className={`flex h-12 w-12 shrink-0 items-center justify-center border border-[var(--hairline)] ${
+              computerMode
+                ? "bg-[var(--surface-3)] text-[var(--ink-2)]"
+                : "bg-[var(--surface-2)] text-[var(--accent)]"
+            }`}
           >
             <Icon name={computerMode ? "monitor" : appIcon(active?.icon ?? "tv")} size={24} />
           </span>

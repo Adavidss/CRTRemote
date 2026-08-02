@@ -6,11 +6,13 @@ import { appIcon, Icon } from "./ui/Icon.tsx";
 /**
  * A launcher card.
  *
- * The tint comes from the descriptor's `hue`, which the host sends — so the
- * phone does not hold a table of which application is which colour, and a new
- * application arrives already looking like part of the set. Every hue is used
- * at the same saturation and lightness, which is what stops nine differently
- * coloured cards turning into a fruit salad.
+ * The descriptor carries a `hue`, and this used to tint each card with it. It
+ * is deliberately ignored. The set on the end of the cable is monochrome, so
+ * the host draws every one of these icons as a step on a brightness ramp — and
+ * a phone showing nine differently coloured cards for the eight things that are
+ * all one colour on the actual screen is not a remote for that screen. Apps are
+ * told apart by their glyph and their name, which is how they are told apart on
+ * the tube. `hue` stays in the protocol for a colour set later.
  */
 export function AppTile({
   app,
@@ -24,7 +26,6 @@ export function AppTile({
   size?: "lg" | "sm";
 }) {
   const disabled = !app.available;
-  const tint = `hsl(${app.hue} 72% 62%)`;
 
   return (
     <button
@@ -41,20 +42,12 @@ export function AppTile({
         disabled && "opacity-45",
         active && "border-[var(--accent)]",
       )}
-      style={
-        {
-          // A tint that only just reads — the card is still a dark card, and the
-          // colour is an accent on it rather than the surface itself.
-          backgroundImage: `radial-gradient(120% 90% at 0% 0%, ${tint}22 0%, transparent 62%)`,
-        } as React.CSSProperties
-      }
     >
       <span
         className={cn(
-          "flex shrink-0 items-center justify-center rounded-[14px]",
+          "flex shrink-0 items-center justify-center border border-[var(--hairline)] bg-[var(--surface-2)] text-[var(--accent)]",
           size === "lg" ? "h-12 w-12" : "h-10 w-10",
         )}
-        style={{ background: `${tint}1f`, color: tint }}
       >
         <Icon name={appIcon(app.icon)} size={size === "lg" ? 24 : 20} />
       </span>
@@ -65,7 +58,7 @@ export function AppTile({
             {app.title}
           </span>
           {active ? (
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" aria-label="Running" />
+            <span className="h-1.5 w-1.5 shrink-0 rounded-none bg-[var(--accent)]" aria-label="Running" />
           ) : null}
         </span>
         {/* `block` is deliberately only on the truncating branch: it sets

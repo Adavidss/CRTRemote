@@ -8,25 +8,31 @@ import { createStore, useStore } from "@/utils/store.ts";
  * reload, so it goes to `localStorage` behind one small store.
  */
 
-export const THEMES = ["phosphor", "amber", "ice", "magenta", "mono"] as const;
+/**
+ * The same phosphors the host offers, under the same names.
+ *
+ * The remote is a controller for a CRT, not a separate product with its own
+ * look, so its themes are the tube's themes: pick P3 Amber on the phone and you
+ * are looking at the palette the screen across the room is drawing in. Every
+ * one separates its roles by *luminance* rather than hue, which is what keeps
+ * the host legible on a black-and-white set — the phone inherits the discipline
+ * for free, and stays readable at arm's length in a dark room.
+ */
+export const THEMES = ["p4-mono", "p1-green", "p3-amber", "p7-blue", "ember", "seafoam"] as const;
 export type Theme = (typeof THEMES)[number];
 
 export const THEME_LABELS: Record<Theme, string> = {
-  phosphor: "Phosphor",
-  amber: "Amber",
-  ice: "Ice",
-  magenta: "Magenta",
-  mono: "Mono",
+  "p4-mono": "P4 Mono",
+  "p1-green": "P1 Green",
+  "p3-amber": "P3 Amber",
+  "p7-blue": "P7 Blue",
+  ember: "Ember",
+  seafoam: "Seafoam",
 };
 
-/** Maps a theme to the `data-theme` value the stylesheet keys off. */
-const THEME_ATTRIBUTE: Record<Theme, string> = {
-  phosphor: "phosphor",
-  amber: "amber",
-  ice: "ice",
-  magenta: "magenta",
-  mono: "mono",
-};
+function isTheme(value: unknown): value is Theme {
+  return typeof value === "string" && (THEMES as readonly string[]).includes(value);
+}
 
 export type ConnectionMode = "simulator" | "websocket" | "http";
 
@@ -45,7 +51,9 @@ export interface RemoteSettings {
 }
 
 const DEFAULTS: RemoteSettings = {
-  theme: "phosphor",
+  // P4 is the white phosphor a black-and-white television actually uses, and it
+  // is the host's default for the same reason.
+  theme: "p4-mono",
   // Simulator by default: a fresh install has no Raspberry Pi to talk to, and
   // opening onto a connection error would be a poor first impression of a
   // system that works perfectly well on its own.
@@ -82,7 +90,12 @@ function load(): RemoteSettings {
     const parsed = JSON.parse(raw) as Partial<RemoteSettings>;
     // Merged rather than trusted: a settings blob written by an older build is
     // missing keys, and a missing key here means a screen renders undefined.
-    return { ...DEFAULTS, ...parsed };
+    const merged = { ...DEFAULTS, ...parsed };
+    // The theme names changed when they were aligned with the host's palettes.
+    // A phone that used an earlier build would restore a name the stylesheet no
+    // longer defines and come up with no theme variables at all.
+    if (!isTheme(merged.theme)) merged.theme = DEFAULTS.theme;
+    return merged;
   } catch {
     return DEFAULTS;
   }
@@ -106,7 +119,7 @@ export function useSettings(): RemoteSettings {
 }
 
 export function applyTheme(theme: Theme): void {
-  document.documentElement.dataset.theme = THEME_ATTRIBUTE[theme];
+  document.documentElement.dataset.theme = theme;
 }
 
 /** The relay's base URL for the current settings. */

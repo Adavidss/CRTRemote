@@ -38,13 +38,16 @@ export function Screen({
                 haptic("tick");
                 onBack();
               }}
-              className="pressable focus-ring -ml-2 mt-1 flex h-9 w-9 items-center justify-center rounded-full text-[var(--ink-2)]"
+              className="pressable focus-ring -ml-2 mt-1 flex h-9 w-9 items-center justify-center rounded-none text-[var(--ink-2)]"
             >
               <Icon name="chevron-left" size={22} />
             </button>
           ) : null}
           <div className="min-w-0 flex-1">
-            <h1 className="t-display truncate">{title}</h1>
+            {/* Wraps rather than truncating: a host name is the one string on
+                this screen the user chose themselves, and a monospace capital
+                runs wide enough that "Simulated CRT" already clipped. */}
+            <h1 className="t-display break-words">{title}</h1>
             {subtitle ? <div className="mt-1 text-[14px] text-[var(--ink-3)]">{subtitle}</div> : null}
           </div>
           {trailing ? <div className="mt-1 shrink-0">{trailing}</div> : null}
@@ -52,7 +55,9 @@ export function Screen({
       </header>
 
       <div className={cn("scroll-area min-h-0 flex-1 px-5 pt-4", className)}>
-        <div className="animate-rise flex flex-col gap-5 pb-32">{children}</div>
+        {/* Clears the floating bar, which is taller than it looks once the
+            home-indicator inset is added underneath it. */}
+        <div className="animate-rise flex flex-col gap-5 pb-40">{children}</div>
       </div>
     </div>
   );

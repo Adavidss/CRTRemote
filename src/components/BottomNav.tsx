@@ -16,7 +16,7 @@ export function BottomNav() {
 
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-safe">
-      <div className="pointer-events-auto mx-4 mb-3 flex w-full max-w-md items-center gap-1 rounded-full border border-[var(--hairline)] bg-[color-mix(in_srgb,var(--surface)_78%,transparent)] p-1.5 shadow-[0_8px_32px_-8px_#000000cc] backdrop-blur-xl">
+      <div className="pointer-events-auto mx-4 mb-3 flex w-full max-w-md items-center gap-1 rounded-none border border-[var(--hairline)] bg-[color-mix(in_srgb,var(--surface)_78%,transparent)] p-1.5">
         {TABS.map((tab) => {
           const selected = tab.route === active;
           return (
@@ -29,14 +29,14 @@ export function BottomNav() {
                 navigate(tab.route);
               }}
               className={cn(
-                "pressable focus-ring relative flex flex-1 flex-col items-center gap-0.5 rounded-full py-2",
+                "pressable focus-ring relative flex flex-1 flex-col items-center gap-0.5 rounded-none py-2",
                 selected ? "text-[var(--accent)]" : "text-[var(--ink-3)]",
               )}
             >
               {/* The selected pill sits behind the icon so the transition is a
                   background moving, not the icon jumping. */}
               {selected ? (
-                <span className="absolute inset-0 rounded-full bg-[var(--accent-soft)]" aria-hidden="true" />
+                <span className="absolute inset-0 rounded-none bg-[var(--accent-soft)]" aria-hidden="true" />
               ) : null}
               <Icon name={appIcon(tab.icon)} size={21} className="relative" />
               <span className="relative text-[10px] font-medium tracking-wide">{tab.label}</span>

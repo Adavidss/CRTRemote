@@ -241,7 +241,7 @@ export function Toggle({
         onChange(!checked);
       }}
       className={cn(
-        "focus-ring relative h-[30px] w-[52px] shrink-0 rounded-full border transition-colors duration-200",
+        "focus-ring relative h-[30px] w-[52px] shrink-0 rounded-none border transition-colors duration-200",
         checked
           ? "border-transparent bg-[var(--accent)]"
           : "border-[var(--hairline)] bg-[var(--surface-3)]",
@@ -250,7 +250,7 @@ export function Toggle({
     >
       <span
         className={cn(
-          "absolute top-[3px] h-[22px] w-[22px] rounded-full bg-white shadow-sm transition-all duration-200",
+          "absolute top-[3px] h-[22px] w-[22px] rounded-none bg-white transition-all duration-200",
           checked ? "left-[27px]" : "left-[3px]",
         )}
         style={{ transitionTimingFunction: "var(--ease-spring)" }}
@@ -300,7 +300,7 @@ export function Meter({
         {Array.from({ length: segments }, (_, i) => (
           <span
             key={i}
-            className="h-[6px] flex-1 rounded-full transition-colors duration-300"
+            className="h-[6px] flex-1 rounded-none transition-colors duration-300"
             style={{ background: i < lit ? colour : "var(--surface-3)" }}
           />
         ))}
@@ -363,7 +363,7 @@ export function Sheet({
           open ? "animate-sheet-in" : "translate-y-full transition-transform duration-200",
         )}
       >
-        <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[var(--hairline-strong)]" />
+        <div className="mx-auto mb-3 h-1 w-9 rounded-none bg-[var(--hairline-strong)]" />
         {title ? <h2 className="t-title mb-3">{title}</h2> : null}
         <div className="pb-5">{children}</div>
       </div>
@@ -394,7 +394,7 @@ export function Pill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium",
+        "inline-flex items-center gap-1.5 rounded-none px-2.5 py-1 text-[11px] font-medium",
         tone === "accent" && "bg-[var(--accent-soft)] text-[var(--accent)]",
         tone === "warn" && "bg-[var(--warn)]/12 text-[var(--warn)]",
         tone === "danger" && "bg-[var(--danger)]/12 text-[var(--danger)]",
@@ -424,7 +424,7 @@ export function Row({
   const content = (
     <>
       {icon ? (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-[var(--surface-3)] text-[var(--ink-2)]">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-none bg-[var(--surface-3)] text-[var(--ink-2)]">
           <Icon name={icon} size={18} />
         </span>
       ) : null}
@@ -478,7 +478,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-8 py-14 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--surface-2)] text-[var(--ink-3)]">
+      <span className="flex h-14 w-14 items-center justify-center rounded-none bg-[var(--surface-2)] text-[var(--ink-3)]">
         <Icon name={icon} size={26} />
       </span>
       <p className="text-[16px] font-medium text-[var(--ink)]">{title}</p>

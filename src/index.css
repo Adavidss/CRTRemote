@@ -3,48 +3,59 @@
 /* ================================================================== *
  * CRT Remote — design tokens
  *
- * The brief was a consumer device, not a control panel, and the whole
- * difference lives in this file: one accent, a lot of near-black, and
- * hairlines instead of boxes. Everything is a CSS variable so the theme
- * picker is a single attribute on <html> rather than a class sprayed
- * through every component.
+ * This is the controller for a CRT, so it is dressed as one. The palette,
+ * the theme names and the type all come from the tube: the same phosphor
+ * ladders the host draws with, and the same 8x8 cell its text sits on.
  *
- * Surfaces get *lighter* as they come forward, and every one of them is
- * slightly blue-black rather than neutral — a true #000 next to an OLED
- * phone's own black reads as a hole in the screen.
+ * Three rules carried over from the host, and they are why this file does
+ * not look like a normal dark theme:
+ *
+ *  1. Roles separate by LUMINANCE, not hue. Two colours of equal brightness
+ *     are one colour on a monochrome set. The phone does not have that
+ *     constraint, but obeying it is what makes the two halves feel like one
+ *     product — and it stays readable at arm's length in a dark room.
+ *  2. Never pure white. 236 is as bright as anything gets, which is the
+ *     value the host clamps its ramps to.
+ *  3. Hard edges. No blur, no glow, no soft shadow. On the host those would
+ *     be simulated CRT effects, which is the one thing this system refuses
+ *     to do; here they would simply break the family resemblance.
+ *
+ * Everything is a CSS variable, so the theme picker is one attribute on
+ * <html> rather than a class sprayed through every component.
  * ================================================================== */
 
 :root {
-  /* Surfaces */
-  --bg: #08090c;
-  --bg-2: #0b0d11;
-  --surface: #131620;
-  --surface-2: #1a1e2b;
-  --surface-3: #232838;
-  --hairline: #ffffff14;
-  --hairline-strong: #ffffff24;
+  /* Surfaces. Black is black — this is a screen pretending to be a tube. */
+  --bg: #000000;
+  --bg-2: #000000;
+  --surface: #0c0d0e;
+  --surface-2: #16181a;
+  --surface-3: #212426;
+  --hairline: #ffffff1f;
+  --hairline-strong: #ffffff3d;
 
-  /* Ink */
-  --ink: #f2f4f8;
-  --ink-2: #a9b0c0;
-  --ink-3: #6b7280;
-  --ink-4: #454b59;
+  /* Ink: the P4 ladder, 236 / 192 / 146 / 100. */
+  --ink: #eceef2;
+  --ink-2: #c0c3c8;
+  --ink-3: #92959b;
+  --ink-4: #64666a;
 
-  /* Accent — the one colour that carries meaning. */
-  --accent: #5ef0a8;
-  --accent-2: #2fd489;
-  --accent-ink: #04140c;
-  --accent-soft: #5ef0a81f;
-  --accent-glow: #5ef0a840;
+  /* On a monochrome phosphor the accent is a rung of the ladder, not a hue. */
+  --accent: #c0c3c8;
+  --accent-2: #92959b;
+  --accent-ink: #000000;
+  --accent-soft: #ffffff1a;
+  --accent-glow: #ffffff00;
 
-  --danger: #ff6b6b;
-  --warn: #ffc46b;
+  --danger: #eceef2;
+  --warn: #dcdfe4;
   --ok: var(--accent);
 
-  --radius-sm: 10px;
-  --radius: 16px;
-  --radius-lg: 22px;
-  --radius-xl: 28px;
+  /* Square. A rounded corner is the one thing an aperture grille cannot do. */
+  --radius-sm: 0px;
+  --radius: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
 
   /* One easing for everything that moves, so the whole app feels like one
      object. Slight overshoot — it is what makes a tap feel mechanical. */
@@ -54,37 +65,79 @@
   color-scheme: dark;
 }
 
-:root[data-theme="amber"] {
-  --accent: #ffb545;
-  --accent-2: #f59a1f;
-  --accent-ink: #1a1002;
-  --accent-soft: #ffb5451f;
-  --accent-glow: #ffb54540;
+/* The phosphors, matching the host palette of the same id. Values are the
+   CRT Companion theme roles: dim / accent / fg / accent2 / bright. */
+
+:root[data-theme="p1-green"] {
+  --ink: #b8f8b0;
+  --ink-2: #60d870;
+  --ink-3: #40b050;
+  --ink-4: #206830;
+  --accent: #60d870;
+  --accent-2: #40b050;
+  --accent-ink: #000602;
+  --accent-soft: #60d8701f;
+  --surface: #000d05;
+  --surface-2: #04170b;
+  --surface-3: #0a2413;
 }
 
-:root[data-theme="ice"] {
-  --accent: #7cc4ff;
-  --accent-2: #3ba0f0;
-  --accent-ink: #041420;
-  --accent-soft: #7cc4ff1f;
-  --accent-glow: #7cc4ff40;
+:root[data-theme="p3-amber"] {
+  --ink: #f8d890;
+  --ink-2: #f0a830;
+  --ink-3: #d88818;
+  --ink-4: #784c10;
+  --accent: #f0a830;
+  --accent-2: #d88818;
+  --accent-ink: #080400;
+  --accent-soft: #f0a8301f;
+  --surface: #0f0a02;
+  --surface-2: #1a1206;
+  --surface-3: #261c0c;
 }
 
-:root[data-theme="magenta"] {
-  --accent: #ff7ad9;
-  --accent-2: #ef4ac2;
-  --accent-ink: #1b0417;
-  --accent-soft: #ff7ad91f;
-  --accent-glow: #ff7ad940;
+:root[data-theme="p7-blue"] {
+  --ink: #dbe6f5;
+  --ink-2: #b0c8e8;
+  --ink-3: #7d97bb;
+  --ink-4: #4d6180;
+  --accent: #b0c8e8;
+  --accent-2: #7d97bb;
+  --accent-ink: #000308;
+  --accent-soft: #b0c8e81f;
+  --surface: #05080f;
+  --surface-2: #0d1219;
+  --surface-3: #171d26;
 }
 
-/* A monochrome theme, for anyone who wants the phone to match the tube. */
-:root[data-theme="mono"] {
-  --accent: #e8e8ee;
-  --accent-2: #b8b8c4;
-  --accent-ink: #0a0a0c;
-  --accent-soft: #ffffff14;
-  --accent-glow: #ffffff30;
+/* The two colour themes, for a colour tube later. Still luminance-ordered. */
+
+:root[data-theme="ember"] {
+  --ink: #ecdcb0;
+  --ink-2: #f39c4a;
+  --ink-3: #d75f3a;
+  --ink-4: #8a3a3c;
+  --accent: #f39c4a;
+  --accent-2: #d75f3a;
+  --accent-ink: #140309;
+  --accent-soft: #f39c4a1f;
+  --surface: #12070e;
+  --surface-2: #1f0c16;
+  --surface-3: #2c1220;
+}
+
+:root[data-theme="seafoam"] {
+  --ink: #d6ecdf;
+  --ink-2: #6fd39b;
+  --ink-3: #39a07a;
+  --ink-4: #1f6f5f;
+  --accent: #6fd39b;
+  --accent-2: #39a07a;
+  --accent-ink: #01100e;
+  --accent-soft: #6fd39b1f;
+  --surface: #04141c;
+  --surface-2: #082029;
+  --surface-3: #0f2f36;
 }
 
 * {
@@ -99,14 +152,17 @@ body,
 
 body {
   margin: 0;
-  background:
-    radial-gradient(120% 60% at 50% -10%, #171b26 0%, transparent 60%),
-    linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 45%);
-  background-attachment: fixed;
+  /* Flat black. The gradient that used to be here was doing the job a
+     vignette does on a tube, which is exactly the kind of simulated CRT
+     effect this system does not draw. */
+  background: var(--bg);
   color: var(--ink);
+  /* Monospace throughout. Everything on this screen is a short label, a
+     count or a time, and setting them on a fixed pitch is what makes the
+     phone read as the same machine as the 40-column grid on the tube. */
   font-family:
-    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, system-ui, sans-serif;
-  font-size: 16px;
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  font-size: 15px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -120,34 +176,38 @@ body {
 
 /* ---------- typography ---------- */
 
+/* Display type is upper-case and letter-spaced rather than large and tight:
+   it is the shape the host's own headings take, and a wide-tracked capital
+   survives being read from across a room. */
 .t-display {
-  font-size: 34px;
+  font-size: 23px;
   font-weight: 700;
-  letter-spacing: -0.028em;
-  line-height: 1.1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.15;
 }
 
 .t-title {
-  font-size: 20px;
-  font-weight: 650;
-  letter-spacing: -0.018em;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .t-label {
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.09em;
+  font-weight: 700;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 
 .t-body {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ink-2);
 }
 
 .t-mono {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -158,16 +218,13 @@ body {
 
 /* ---------- surfaces ---------- */
 
+/* A panel is a ruled box: one flat fill and one hard border, the way the
+   host draws every frame. No bevel, no drop shadow — depth here would be
+   the phone pretending to be lit, and nothing else in this system is. */
 .card {
-  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-lg);
-  /* The top hairline catches light like a bevel; without it a dark card on a
-     dark background has no edge at all on an OLED panel. */
-  box-shadow:
-    inset 0 1px 0 0 #ffffff10,
-    0 1px 2px #00000060,
-    0 8px 24px -12px #00000090;
 }
 
 .card-flat {
@@ -176,10 +233,11 @@ body {
   border-radius: var(--radius);
 }
 
+/* Was frosted glass. A blur is the one effect a phosphor cannot produce, so
+   the bar that floats over the content is simply opaque with a ruled edge —
+   which also costs nothing to composite while a preview is animating. */
 .glass {
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  backdrop-filter: blur(20px) saturate(1.6);
-  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  background: var(--bg);
   border: 1px solid var(--hairline);
 }
 
@@ -195,8 +253,14 @@ body {
     opacity 0.18s var(--ease);
 }
 
+/* A press inverts rather than shrinks. Scaling a square panel reads as a
+   soft, rubbery button; inverting it is how a selected row looks on the
+   tube, where the highlight is a filled bar with the background colour
+   drawn through it. */
 .pressable:active {
-  transform: scale(0.965);
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .pressable:disabled,
