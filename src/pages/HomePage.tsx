@@ -1,7 +1,7 @@
 import { navigate } from "@/router.ts";
 import { applyConnection, send, useConnection, useLink } from "@/state/connection.ts";
 import { useSettings } from "@/state/settings.ts";
-import { AppTile } from "@/components/AppTile.tsx";
+import { CATEGORY_LABELS, LibraryList, LibraryRow } from "@/components/Library.tsx";
 import { ConnectionPill } from "@/components/ConnectionPill.tsx";
 import { PreviewCard } from "@/components/PreviewCard.tsx";
 import { Screen } from "@/components/Screen.tsx";
@@ -116,17 +116,21 @@ export function HomePage() {
       {recent.length > 0 && !computerMode ? (
         <section>
           <p className="t-label mb-2 px-1">Recent</p>
-          <div className="flex flex-col gap-2">
+          {/* The same rows as Apps and Games. Three list styles across three
+              screens made one application look like three. */}
+          <LibraryList>
             {recent.map((app) => (
-              <AppTile
+              <LibraryRow
                 key={app.id}
-                app={app}
-                size="sm"
+                title={app.title}
+                kind={CATEGORY_LABELS[app.category] ?? app.category}
+                detail={app.description}
                 active={app.id === state.apps.activeAppId}
+                disabled={!app.available}
                 onSelect={() => send({ type: "app.launch", appId: app.id })}
               />
             ))}
-          </div>
+          </LibraryList>
         </section>
       ) : null}
 

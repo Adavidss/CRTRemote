@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
+import type { GameEntry } from "@/protocol";
 import { navigate } from "@/router.ts";
 import { send, useConnection } from "@/state/connection.ts";
 import { ConnectionPill } from "@/components/ConnectionPill.tsx";
-import { GameCard } from "@/components/GameCard.tsx";
+import { LibraryList, LibraryRow, LibraryTabs } from "@/components/Library.tsx";
 import { Screen } from "@/components/Screen.tsx";
-import { EmptyState, Pill, Segmented } from "@/components/ui/controls.tsx";
+import { EmptyState, Pill } from "@/components/ui/controls.tsx";
 import { SYSTEM_LABELS } from "@/utils/format.ts";
 
 /**
@@ -17,6 +18,29 @@ import { SYSTEM_LABELS } from "@/utils/format.ts";
  */
 
 type Filter = "published" | "user" | "installed";
+
+/**
+ * The one line the television cannot spare room for.
+ *
+ * Why it will not launch takes precedence over anything else — that is the
+ * question being asked when a row is greyed out.
+ */
+function describeGame(game: GameEntry): string | undefined {
+  if (!game.playable) return game.unavailableReason ?? "Needs a core that is not installed";
+  const parts: string[] = [];
+  if (game.playSeconds >= 60) parts.push(`${Math.round(game.playSeconds / 60)} min played`);
+  if (game.lastPlayedAt) parts.push(`last ${relativeDay(game.lastPlayedAt)}`);
+  if (game.hasSave) parts.push("has a save");
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+function relativeDay(at: number): string {
+  const days = Math.floor((Date.now() - at) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 30) return `${days} days ago`;
+  return "a while ago";
+}
 
 export function GamesPage() {
   const { state } = useConnection();
@@ -42,18 +66,27 @@ export function GamesPage() {
   return (
     <Screen
       title="Games"
-      subtitle={`${state.games.library.filter((game) => game.playable).length} of ${state.games.library.length} ready to play`}
+      // No subtitle: it wrapped to three lines beside the pill, and the count
+      // on the tabs row plus the "Playable" tab already answer it.
       onBack={() => navigate("apps")}
       trailing={<ConnectionPill />}
     >
-      <Segmented<Filter>
-        options={[
-          { value: "published", label: "Published" },
-          { value: "user", label: "Your library" },
-          { value: "installed", label: "Playable" },
+      {/* Same shape as the applications list and the CRT's own launcher: title
+          left, system right, one inverted bar on whatever is running. The
+          second line still carries what the television has no room for — how
+          long it has been played, whether there is a save, or why it cannot be
+          launched — which was the argument for a companion screen in the first
+          place, and is not something the layout has to give up. */}
+      <LibraryTabs
+        tabs={[
+          { id: "published", label: "Published" },
+          { id: "user", label: "Yours" },
+          { id: "installed", label: "Playable" },
         ]}
-        value={filter}
-        onChange={setFilter}
+        active={filter}
+        onSelect={(id) => setFilter(id as Filter)}
+        shown={games.length}
+        total={state.games.library.length}
       />
 
       {games.length === 0 ? (
@@ -67,23 +100,31 @@ export function GamesPage() {
           }
         />
       ) : (
-        <div className="flex flex-col gap-3">
-          {games.map((game) => (
-            <GameCard
-              key={game.id}
-              game={game}
-              active={game.id === state.games.activeGameId && state.games.session !== "stopped"}
-              onPlay={() => {
-                if (game.id === state.games.activeGameId && state.games.session !== "stopped") {
-                  send({ type: "games.stop" });
-                  return;
-                }
-                send({ type: "games.launch", gameId: game.id });
-                navigate("remote");
-              }}
-            />
-          ))}
-        </div>
+        <LibraryList>
+          {games.map((game) => {
+            const running = game.id === state.games.activeGameId && state.games.session !== "stopped";
+            return (
+              <LibraryRow
+                key={game.id}
+                title={game.title}
+                kind={SYSTEM_LABELS[game.system] ?? game.system}
+                detail={describeGame(game)}
+                active={running}
+                disabled={!game.playable}
+                onSelect={() => {
+                  // Tapping what is already running stops it, so one row is
+                  // both the play and the stop control.
+                  if (running) {
+                    send({ type: "games.stop" });
+                    return;
+                  }
+                  send({ type: "games.launch", gameId: game.id });
+                  navigate("remote");
+                }}
+              />
+            );
+          })}
+        </LibraryList>
       )}
 
       {missingCores.length > 0 ? (
