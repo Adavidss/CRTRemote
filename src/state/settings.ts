@@ -34,7 +34,7 @@ function isTheme(value: unknown): value is Theme {
   return typeof value === "string" && (THEMES as readonly string[]).includes(value);
 }
 
-export type ConnectionMode = "simulator" | "websocket" | "http";
+export type ConnectionMode = "simulator" | "broadcast" | "websocket" | "http";
 
 export interface RemoteSettings {
   theme: Theme;

@@ -6,15 +6,23 @@ which runs on a Raspberry Pi and renders everything the tube shows.
 
 **The phone never renders the CRT interface. It only controls it.**
 
+**Try it without installing anything:** <https://www.kidsdc.org/CRTRemote/>
+
+It opens in simulation mode. To point it at a *real* host with no hardware and
+no server, open [CRTHost](https://www.kidsdc.org/CRTHost/) in a second tab, set
+this app's connection to **This browser** and the host's link to **CRTRemote in
+another tab** — both sites publish under one origin, so they talk over a
+`BroadcastChannel`.
+
 ```bash
 npm install
 npm run dev          # http://localhost:3120
 ```
 
-No Raspberry Pi required. It opens in simulation mode: a simulated host runs
-inside the page, speaking the real protocol over the real transport interface,
-so every screen is exercising the real code path — including the preview images,
-which are genuinely rendered rather than mocked.
+No Raspberry Pi required. Simulation mode runs a simulated host inside the page,
+speaking the real protocol over the real transport interface, so every screen is
+exercising the real code path — including the preview images, which are
+genuinely rendered rather than mocked.
 
 ## What it does
 

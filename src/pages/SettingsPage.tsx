@@ -35,6 +35,10 @@ export function SettingsPage() {
   const [testResult, setTestResult] = useState<string | null>(null);
 
   const mixedContent = isMixedContentBlocked();
+  // Only these two dial out over the network, so only these two care about an
+  // address or are blocked by the page being served over HTTPS. Broadcast talks
+  // to another tab and is unaffected by both.
+  const needsRelay = settings.connectionMode === "websocket" || settings.connectionMode === "http";
 
   return (
     <Screen title="Settings" trailing={<ConnectionPill />}>
@@ -44,6 +48,7 @@ export function SettingsPage() {
           <Segmented<ConnectionMode>
             options={[
               { value: "simulator", label: "Simulator" },
+              { value: "broadcast", label: "This browser" },
               { value: "websocket", label: "WebSocket" },
               { value: "http", label: "HTTP" },
             ]}
@@ -53,13 +58,15 @@ export function SettingsPage() {
           <p className="mt-2 text-[12px] text-[var(--ink-4)]">
             {settings.connectionMode === "simulator"
               ? "A simulated CRT runs inside this page. Nothing leaves the device."
-              : settings.connectionMode === "websocket"
-                ? "Preferred. One socket, pushed both ways."
-                : "Fallback for networks that block WebSockets. Slower, and previews suffer."}
+              : settings.connectionMode === "broadcast"
+                ? "Drives a real CRTHost open in another tab of this browser. No relay, no network — but the same machine only."
+                : settings.connectionMode === "websocket"
+                  ? "Preferred. One socket, pushed both ways."
+                  : "Fallback for networks that block WebSockets. Slower, and previews suffer."}
           </p>
         </div>
 
-        {settings.connectionMode !== "simulator" ? (
+        {needsRelay ? (
           <Row
             label="Relay address"
             detail={`${settings.hostAddress}:${settings.hostPort}`}
@@ -113,12 +120,13 @@ export function SettingsPage() {
 
       {testResult ? <p className="px-1 text-[12px] text-[var(--warn)]">{testResult}</p> : null}
 
-      {mixedContent && settings.connectionMode !== "simulator" ? (
+      {mixedContent && needsRelay ? (
         <p className="rounded-[var(--radius)] border border-[var(--warn)]/30 bg-[var(--warn)]/8 px-4 py-3 text-[13px] leading-relaxed text-[var(--warn)]">
           This page is served over HTTPS, and browsers refuse plain <span className="t-mono">ws://</span> and{" "}
-          <span className="t-mono">http://</span> connections from a secure page. To control a real CRT, open this
-          remote from the relay itself — it serves this app over plain HTTP on your network. The simulator works
-          here either way.
+          <span className="t-mono">http://</span> connections from a secure page. To control a CRT over the network,
+          open this remote from the relay itself — it serves this app over plain HTTP on your network. To drive a
+          real CRTHost without a relay, open it in another tab and choose <strong>This browser</strong> above. The
+          simulator works here either way.
         </p>
       ) : null}
 

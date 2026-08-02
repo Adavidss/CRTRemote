@@ -14,7 +14,13 @@ import type { WireEnvelope } from "./envelope.ts";
  * beyond `connect`, `send`, and reacting to what arrives.
  */
 
-export type TransportKind = "websocket" | "http-polling" | "loopback" | "simulated";
+export type TransportKind =
+  | "websocket"
+  | "http-polling"
+  | "loopback"
+  | "simulated"
+  /** Two same-origin browser tabs, via BroadcastChannel. No server involved. */
+  | "broadcast";
 
 export type ConnectionStatus =
   | "idle"

@@ -1,6 +1,7 @@
 import type { RemoteCommand, Transport } from "@/protocol";
 import { HostConnection } from "@/services/HostConnection.ts";
 import { SimulatedHost } from "@/services/simulator/SimulatedHost.ts";
+import { BroadcastChannelTransport } from "@/services/transports/BroadcastChannelTransport.ts";
 import { discoverRelayFromOrigin } from "@/services/transports/discovery.ts";
 import { HttpPollingTransport } from "@/services/transports/HttpPollingTransport.ts";
 import { LoopbackTransport } from "@/services/transports/LoopbackTransport.ts";
@@ -31,14 +32,20 @@ let simulator: SimulatedHost | null = null;
 let currentKey = "";
 
 function keyFor(settings: RemoteSettings): string {
-  return settings.connectionMode === "simulator"
-    ? "simulator"
-    : `${settings.connectionMode}:${settings.hostAddress}:${settings.hostPort}`;
+  // Neither of these points at an address, so including one would rebuild the
+  // transport every time the user edited a host they are not using.
+  if (settings.connectionMode === "simulator") return "simulator";
+  if (settings.connectionMode === "broadcast") return "broadcast";
+  return `${settings.connectionMode}:${settings.hostAddress}:${settings.hostPort}`;
 }
 
 function buildTransport(settings: RemoteSettings): Transport {
   const clientId = connection.getClientInfo().id;
   const urls = relayUrls(settings);
+
+  if (settings.connectionMode === "broadcast") {
+    return new BroadcastChannelTransport({ role: "remote", clientId });
+  }
 
   if (settings.connectionMode === "websocket") {
     return new WebSocketTransport({
@@ -129,6 +136,8 @@ export function connectionModeLabel(mode: ConnectionMode): string {
   switch (mode) {
     case "simulator":
       return "Simulator";
+    case "broadcast":
+      return "Same browser";
     case "websocket":
       return "WebSocket";
     case "http":
