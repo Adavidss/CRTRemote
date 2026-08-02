@@ -1,5 +1,5 @@
 import { navigate } from "@/router.ts";
-import { send, useConnection } from "@/state/connection.ts";
+import { applyConnection, send, useConnection, useLink } from "@/state/connection.ts";
 import { useSettings } from "@/state/settings.ts";
 import { AppTile } from "@/components/AppTile.tsx";
 import { ConnectionPill } from "@/components/ConnectionPill.tsx";
@@ -15,24 +15,33 @@ import { formatUptime } from "@/utils/format.ts";
  */
 export function HomePage() {
   const { state, transport, protocolMismatch } = useConnection();
+  const link = useLink();
   const settings = useSettings();
 
   if (!state) {
+    // Auto-connect is either still deciding or has attached a transport that
+    // has not produced state yet. Either way this is "waiting", not "choose a
+    // transport" — the old copy sent people to a settings screen to make a
+    // decision the app had already made for them.
+    const searching =
+      link.resolving || transport?.status === "connecting" || transport?.status === "reconnecting";
+
     return (
       <Screen title="CRT" trailing={<ConnectionPill />}>
-        {transport?.status === "connecting" || transport?.status === "reconnecting" ? (
+        {searching ? (
           <div className="flex flex-col items-center gap-3 py-16 text-[var(--ink-3)]">
             <Spinner size={22} />
-            <p className="text-[14px]">Looking for the CRT…</p>
+            <p className="text-[14px]">Looking for your CRT…</p>
+            <p className="text-[12px] text-[var(--ink-4)]">{link.reason}</p>
           </div>
         ) : (
           <EmptyState
             icon="tv"
-            title="Not connected"
-            detail="Choose how this remote should reach the CRT, or switch on the simulator to explore without one."
+            title="No CRT found"
+            detail="Open CRTHost on the screen you want to control and press “Connect a remote…”. It will tell you what to do from there."
             action={
-              <Button tone="accent" icon="settings" onClick={() => navigate("settings")}>
-                Open settings
+              <Button tone="accent" icon="refresh" onClick={() => void applyConnection(true)}>
+                Look again
               </Button>
             }
           />

@@ -2,16 +2,15 @@ import type { RemoteCommand, Transport } from "@/protocol";
 import { HostConnection } from "@/services/HostConnection.ts";
 import { SimulatedHost } from "@/services/simulator/SimulatedHost.ts";
 import { BroadcastChannelTransport } from "@/services/transports/BroadcastChannelTransport.ts";
+import { chooseLink, type LinkKind } from "@/services/transports/autoLink.ts";
 import { cloudSocketUrl } from "@/services/transports/cloudRelay.ts";
-import { discoverRelayFromOrigin } from "@/services/transports/discovery.ts";
+import { createStore } from "@/utils/store.ts";
 import { HttpPollingTransport } from "@/services/transports/HttpPollingTransport.ts";
 import { LoopbackTransport } from "@/services/transports/LoopbackTransport.ts";
 import { WebSocketTransport } from "@/services/transports/WebSocketTransport.ts";
 import {
-  hasStoredSettings,
   relayUrls,
   settingsStore,
-  updateSettings,
   type ConnectionMode,
   type RemoteSettings,
 } from "./settings.ts";
@@ -33,6 +32,11 @@ let simulator: SimulatedHost | null = null;
 let currentKey = "";
 
 function keyFor(settings: RemoteSettings): string {
+  // Auto depends on the saved pairing, because that is one of the things it
+  // will try — but not on the manual address fields.
+  if (settings.connectionMode === "auto") {
+    return `auto:${settings.cloudRelayUrl}:${settings.cloudRoom}`;
+  }
   // Neither of these points at an address, so including one would rebuild the
   // transport every time the user edited a host they are not using.
   if (settings.connectionMode === "simulator") return "simulator";
@@ -71,6 +75,43 @@ function buildTransport(settings: RemoteSettings): Transport {
   return new HttpPollingTransport({ baseUrl: urls.http, role: "remote", clientId });
 }
 
+/**
+ * What auto-connect settled on, for the UI to explain itself.
+ *
+ * `simulated` is tracked separately from the transport's own status because a
+ * simulation reports itself perfectly connected — which is true and completely
+ * misleading. Every screen that shows a connection needs to be able to say
+ * "this is a pretend CRT" in the same breath.
+ */
+export interface LinkResolution {
+  kind: LinkKind | "manual";
+  reason: string;
+  simulated: boolean;
+  /** Still deciding. The UI shows "looking…" rather than a wrong answer. */
+  resolving: boolean;
+}
+
+export const linkStore = createStore<LinkResolution>({
+  kind: "none",
+  reason: "Starting up",
+  simulated: false,
+  resolving: true,
+});
+
+export function useLink(): LinkResolution {
+  return useStore(linkStore);
+}
+
+async function startSimulator(reason: string): Promise<void> {
+  // Both ends of the loopback live in this tab; a little latency keeps the UI
+  // honest about the fact that a command is a round trip.
+  const [hostSide, remoteSide] = LoopbackTransport.pair({ latencyMs: 24, label: "simulator" });
+  simulator = new SimulatedHost();
+  await simulator.attach(hostSide);
+  await connection.connect(remoteSide);
+  linkStore.set({ kind: "none", reason, simulated: true, resolving: false });
+}
+
 /** Connect (or reconnect) for the current settings. Safe to call repeatedly. */
 export async function applyConnection(force = false): Promise<void> {
   const settings = settingsStore.get();
@@ -81,52 +122,70 @@ export async function applyConnection(force = false): Promise<void> {
   simulator?.stop();
   simulator = null;
 
-  if (settings.connectionMode === "simulator") {
-    // Both ends of the loopback live in this tab; a little latency keeps the
-    // UI honest about the fact that a command is a round trip.
-    const [hostSide, remoteSide] = LoopbackTransport.pair({ latencyMs: 24, label: "simulator" });
-    simulator = new SimulatedHost();
-    await simulator.attach(hostSide);
-    await connection.connect(remoteSide);
+  if (settings.connectionMode === "auto") {
+    linkStore.set({ kind: "none", reason: "Looking for your CRT", simulated: false, resolving: true });
+
+    const choice = await chooseLink({
+      role: "remote",
+      cloud:
+        settings.cloudRelayUrl && settings.cloudRoom
+          ? { relayUrl: settings.cloudRelayUrl, room: settings.cloudRoom }
+          : null,
+    });
+
+    // Settings may have changed while we were probing — a later call owns the
+    // connection now, and completing this one would fight it.
+    if (keyFor(settingsStore.get()) !== key) return;
+
+    if (choice.kind === "relay" && choice.relay) {
+      await connection.connect(
+        new WebSocketTransport({
+          url: choice.relay.websocketUrl,
+          role: "remote",
+          clientId: connection.getClientInfo().id,
+          clientName: connection.getClientInfo().name,
+        }),
+      );
+    } else if (choice.kind === "cloud" && choice.cloud) {
+      await connection.connect(
+        new WebSocketTransport({
+          url: cloudSocketUrl(choice.cloud),
+          role: "remote",
+          clientId: connection.getClientInfo().id,
+          clientName: connection.getClientInfo().name,
+        }),
+      );
+    } else if (choice.kind === "broadcast") {
+      await connection.connect(
+        new BroadcastChannelTransport({ role: "remote", clientId: connection.getClientInfo().id }),
+      );
+    } else {
+      await startSimulator(choice.reason);
+      return;
+    }
+
+    linkStore.set({ kind: choice.kind, reason: choice.reason, simulated: false, resolving: false });
     return;
   }
 
+  if (settings.connectionMode === "simulator") {
+    await startSimulator("Simulator chosen by hand");
+    return;
+  }
+
+  linkStore.set({
+    kind: "manual",
+    reason: `${connectionModeLabel(settings.connectionMode)}, chosen by hand`,
+    simulated: false,
+    resolving: false,
+  });
   await connection.connect(buildTransport(settings));
 }
 
-/**
- * Point at the relay that served this page, if one did.
- *
- * When the relay on the Raspberry Pi is serving this app, its address is the
- * page's own origin — so opening the URL is the entire setup, and nobody has to
- * find out their Pi's IP address. Only ever applied on a device that has never
- * been configured; after that the user's choice wins.
- *
- * Returns true if it changed anything.
- */
-export async function autoConfigure(): Promise<boolean> {
-  if (hasStoredSettings()) return false;
-  const relay = await discoverRelayFromOrigin();
-  if (!relay) return false;
-  updateSettings({
-    connectionMode: "websocket",
-    hostAddress: relay.host,
-    hostPort: relay.port,
-  });
-  return true;
-}
-
-/** Detect on demand, from the settings screen. Overwrites what is there. */
-export async function detectRelay(): Promise<boolean> {
-  const relay = await discoverRelayFromOrigin();
-  if (!relay) return false;
-  updateSettings({
-    connectionMode: "websocket",
-    hostAddress: relay.host,
-    hostPort: relay.port,
-  });
-  return true;
-}
+// `autoConfigure` and `detectRelay` used to live here: both rewrote the saved
+// settings to point at whatever relay had served the page. `chooseLink` now
+// discovers the same thing every time it connects, without editing anything the
+// user might later be surprised by, so neither has a reason to exist.
 
 // A change of host or mode reconnects; a change of theme does not.
 settingsStore.subscribe(() => {
@@ -147,6 +206,8 @@ export function useHostState() {
 
 export function connectionModeLabel(mode: ConnectionMode): string {
   switch (mode) {
+    case "auto":
+      return "Automatic";
     case "simulator":
       return "Simulator";
     case "broadcast":

@@ -34,7 +34,16 @@ function isTheme(value: unknown): value is Theme {
   return typeof value === "string" && (THEMES as readonly string[]).includes(value);
 }
 
-export type ConnectionMode = "simulator" | "broadcast" | "cloud" | "websocket" | "http";
+/**
+ * `auto` is the only one anybody should need.
+ *
+ * The rest are diagnostics. Which transport can physically reach the CRT is
+ * decided by where this page is running and what is switched on, not by taste,
+ * so making it a five-way choice on both halves — each defaulting to a
+ * simulation — meant two apps that opened looking connected while wired to
+ * nothing. See `services/transports/autoLink.ts`.
+ */
+export type ConnectionMode = "auto" | "simulator" | "broadcast" | "cloud" | "websocket" | "http";
 
 export interface RemoteSettings {
   theme: Theme;
@@ -62,10 +71,9 @@ const DEFAULTS: RemoteSettings = {
   // P4 is the white phosphor a black-and-white television actually uses, and it
   // is the host's default for the same reason.
   theme: "p4-mono",
-  // Simulator by default: a fresh install has no Raspberry Pi to talk to, and
-  // opening onto a connection error would be a poor first impression of a
-  // system that works perfectly well on its own.
-  connectionMode: "simulator",
+  // Look for a real CRT first and fall back to the simulation only when there
+  // is genuinely nothing there — and say which happened.
+  connectionMode: "auto",
   hostAddress: "crt.local",
   hostPort: 7890,
   cloudRelayUrl: "",

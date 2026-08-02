@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { PreviewMode } from "@/protocol";
-import { applyConnection, connectionModeLabel, detectRelay, send, useConnection } from "@/state/connection.ts";
-import { probeRelay } from "@/services/transports/discovery.ts";
+import { applyConnection, connectionModeLabel, send, useConnection, useLink } from "@/state/connection.ts";
 import { normaliseRoomCode } from "@/services/transports/cloudRelay.ts";
+import { probeRelay } from "@/services/transports/discovery.ts";
 import {
   isMixedContentBlocked,
   THEME_LABELS,
@@ -27,11 +27,14 @@ import { Icon } from "@/components/ui/Icon.tsx";
  */
 export function SettingsPage() {
   const { state, transport, identity } = useConnection();
+  const link = useLink();
   const settings = useSettings();
   const [editingHost, setEditingHost] = useState(false);
   const [addressDraft, setAddressDraft] = useState(settings.hostAddress);
   const [portDraft, setPortDraft] = useState(String(settings.hostPort));
-  const [detecting, setDetecting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  // Only for the manual-address sheet, where testing before committing turns a
+  // wrong address from "nothing works" into one line of feedback.
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
@@ -43,34 +46,49 @@ export function SettingsPage() {
 
   return (
     <Screen title="Settings" trailing={<ConnectionPill />}>
-      {/* ── this phone ─────────────────────────────────────────── */}
+      {/* ── the link ───────────────────────────────────────────────
+          One line saying what happened, and a way to try again. The list of
+          transports is a diagnostic and lives at the bottom of the screen: it
+          used to be the first thing here, which made choosing one look like a
+          required step rather than a repair. */}
       <RowGroup label="Connection">
         <div className="px-4 py-3">
-          <Segmented<ConnectionMode>
-            options={[
-              { value: "simulator", label: "Simulator" },
-              { value: "cloud", label: "Public relay" },
-              { value: "broadcast", label: "This browser" },
-              { value: "websocket", label: "WebSocket" },
-              { value: "http", label: "HTTP" },
-            ]}
-            value={settings.connectionMode}
-            onChange={(mode) => updateSettings({ connectionMode: mode })}
-          />
-          <p className="mt-2 text-[12px] text-[var(--ink-4)]">
-            {settings.connectionMode === "simulator"
-              ? "A simulated CRT runs inside this page. Nothing leaves the device."
-              : settings.connectionMode === "cloud"
-                ? "Meets the CRT at a relay on the internet, so this phone does not have to be on its network."
-                : settings.connectionMode === "broadcast"
-                  ? "Drives a real CRTHost open in another tab of this browser. No relay, no network — but the same machine only."
-                  : settings.connectionMode === "websocket"
-                    ? "Preferred. One socket, pushed both ways."
-                    : "Fallback for networks that block WebSockets. Slower, and previews suffer."}
-          </p>
+          <div className="flex items-start gap-3">
+            <span
+              className={`mt-1.5 h-2 w-2 shrink-0 ${
+                link.resolving
+                  ? "animate-pulse bg-[var(--ink-3)]"
+                  : link.simulated
+                    ? "bg-[var(--warn)]"
+                    : "bg-[var(--accent)]"
+              }`}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] text-[var(--ink)]">
+                {link.resolving
+                  ? "Looking for your CRT…"
+                  : link.simulated
+                    ? "Simulated CRT"
+                    : (state?.identity.name ?? "Connected")}
+              </p>
+              <p className="mt-0.5 text-[12px] text-[var(--ink-4)]">{link.reason}</p>
+            </div>
+            <Button size="sm" icon="refresh" busy={link.resolving} onClick={() => void applyConnection(true)}>
+              Again
+            </Button>
+          </div>
+
+          {link.simulated ? (
+            <p className="mt-3 border border-[var(--hairline)] px-3 py-2 text-[12px] leading-relaxed text-[var(--ink-3)]">
+              Nothing real was found, so this is a pretend CRT running inside the page. Everything works; it just
+              is not your television. To connect a real one, open CRTHost and use its{" "}
+              <span className="text-[var(--ink)]">Connect a remote…</span> button — it will tell you what to do
+              from there.
+            </p>
+          ) : null}
         </div>
 
-        {settings.connectionMode === "cloud" ? (
+        {settings.connectionMode === "cloud" || (settings.cloudRelayUrl && settings.cloudRoom) ? (
           <div className="px-4 py-3">
             <label className="mb-3 block">
               <span className="t-label mb-1 block">Relay URL</span>
@@ -125,47 +143,7 @@ export function SettingsPage() {
             }}
           />
         ) : null}
-
-        {settings.connectionMode !== "simulator" ? (
-          <Row label="Link" detail={transport?.detail ?? transport?.status ?? "idle"} icon="power">
-            <Button size="sm" icon="refresh" onClick={() => void applyConnection(true)}>
-              Retry
-            </Button>
-          </Row>
-        ) : null}
-
-        {/* When this page was served by the relay, the relay is simply where
-            the page came from — so "find it" is one request, not a scan. */}
-        <Row
-          label="Find the CRT"
-          detail={
-            detecting
-              ? "Looking…"
-              : mixedContent
-                ? "Not possible over HTTPS"
-                : "Use whatever served this page"
-          }
-          icon="link"
-        >
-          <Button
-            size="sm"
-            busy={detecting}
-            disabled={mixedContent}
-            onClick={() => {
-              setDetecting(true);
-              void detectRelay()
-                .then((found) => {
-                  setTestResult(found ? null : "No CRT answered at this address.");
-                })
-                .finally(() => setDetecting(false));
-            }}
-          >
-            Detect
-          </Button>
-        </Row>
       </RowGroup>
-
-      {testResult ? <p className="px-1 text-[12px] text-[var(--warn)]">{testResult}</p> : null}
 
       {mixedContent && needsRelay ? (
         <p className="rounded-[var(--radius)] border border-[var(--warn)]/30 bg-[var(--warn)]/8 px-4 py-3 text-[13px] leading-relaxed text-[var(--warn)]">
@@ -345,10 +323,58 @@ export function SettingsPage() {
         </Row>
       </RowGroup>
 
-      {identity ? (
+      {/* ── the escape hatch ───────────────────────────────────────
+          Deliberately last, deliberately collapsed. Which transport can reach
+          the CRT is a fact about the situation, not a preference, so the only
+          reason to open this is that the automatic choice got it wrong. */}
+      <RowGroup label="Advanced">
+        <Row
+          label="Connection method"
+          detail={connectionModeLabel(settings.connectionMode)}
+          icon="link"
+          onClick={() => setShowAdvanced((open) => !open)}
+        />
+        {showAdvanced ? (
+          <div className="px-4 py-3">
+            <Segmented<ConnectionMode>
+              options={[
+                { value: "auto", label: "Auto" },
+                { value: "cloud", label: "Relay" },
+                { value: "broadcast", label: "Tab" },
+                { value: "websocket", label: "WS" },
+                { value: "http", label: "HTTP" },
+                { value: "simulator", label: "Sim" },
+              ]}
+              value={settings.connectionMode}
+              onChange={(mode) => updateSettings({ connectionMode: mode })}
+            />
+            <p className="mt-2 text-[12px] leading-relaxed text-[var(--ink-4)]">
+              {settings.connectionMode === "auto"
+                ? "Tries the relay that served this page, then a saved pairing, then another tab — and simulates only if none of them answer."
+                : settings.connectionMode === "simulator"
+                  ? "A simulated CRT inside this page. Nothing leaves the device."
+                  : settings.connectionMode === "cloud"
+                    ? "Always use the public relay and the code below."
+                    : settings.connectionMode === "broadcast"
+                      ? "Always talk to a CRTHost tab in this same browser."
+                      : settings.connectionMode === "websocket"
+                        ? "Always dial the relay address above."
+                        : "Long-polled HTTP, for networks that block WebSockets."}
+            </p>
+            {transport ? (
+              <p className="mt-2 t-mono text-[11px] text-[var(--ink-4)]">
+                {transport.kind} · {transport.status}
+                {transport.detail ? ` · ${transport.detail}` : ""}
+                {transport.reconnects > 0 ? ` · ${transport.reconnects} reconnects` : ""}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </RowGroup>
+
+      {identity && !link.simulated ? (
         <p className="px-1 text-[12px] text-[var(--ink-4)]">
-          Connected to {identity.name} ({identity.model}) over {connectionModeLabel(settings.connectionMode)} · host
-          software {identity.version}.
+          Connected to {identity.name} ({identity.model}) · host software {identity.version}.
         </p>
       ) : null}
 

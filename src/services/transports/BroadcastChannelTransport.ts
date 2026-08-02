@@ -70,6 +70,46 @@ export class BroadcastChannelTransport extends BaseTransport {
     return typeof BroadcastChannel !== "undefined";
   }
 
+  /**
+   * Is the other half open in another tab right now?
+   *
+   * Auto-connect needs to know this *before* committing to a transport, because
+   * opening a channel always succeeds — so "connected" is not a useful answer
+   * on its own and a remote would happily sit paired with nobody. Asks, waits
+   * briefly for an answer, and tidies up either way.
+   */
+  static async probePeer(role: PeerRole, timeoutMs = 700, channelName = "crt-os"): Promise<boolean> {
+    if (!BroadcastChannelTransport.supported) return false;
+    const channel = new BroadcastChannel(channelName);
+    const id = `probe-${Math.random().toString(36).slice(2, 10)}`;
+
+    return new Promise<boolean>((resolve) => {
+      let done = false;
+      const finish = (found: boolean) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        channel.removeEventListener("message", onMessage as EventListener);
+        channel.close();
+        resolve(found);
+      };
+      const onMessage = (event: MessageEvent<ChannelMessage>) => {
+        const message = event.data;
+        if (!message || typeof message !== "object" || !("crt" in message)) return;
+        // Anything at all from the opposite role proves someone is there.
+        if (message.role !== role) finish(true);
+      };
+      const timer = setTimeout(() => finish(false), timeoutMs);
+
+      channel.addEventListener("message", onMessage as EventListener);
+      // This is `BroadcastChannel.postMessage`, which takes exactly one
+      // argument; the lint rule is about `window.postMessage`. A channel is
+      // same-origin by construction, so there is no target origin to give.
+      // oxlint-disable-next-line unicorn/require-post-message-target-origin
+      channel.postMessage({ crt: "presence", role, id, event: "hello" } satisfies ChannelMessage);
+    });
+  }
+
   async connect(): Promise<void> {
     if (this.channel) return;
     if (!BroadcastChannelTransport.supported) {
