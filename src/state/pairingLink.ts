@@ -54,8 +54,13 @@ export function consumePairingLink(): boolean {
   const pairing = readPairingLink();
   if (!pairing) return false;
 
+  // Saved, not pinned. Leaving the mode on `auto` means a saved pairing wins
+  // whenever nothing closer is available — but if this phone is later opened
+  // from the relay on its own network, that still takes precedence. Forcing
+  // `cloud` here would hold it on the internet route forever, including while
+  // standing next to the CRT.
   updateSettings({
-    connectionMode: "cloud",
+    connectionMode: "auto",
     cloudRelayUrl: pairing.relayUrl,
     cloudRoom: pairing.room,
   });

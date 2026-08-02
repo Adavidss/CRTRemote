@@ -65,14 +65,28 @@ export async function chooseLink({
     };
   }
 
-  // 2 — A saved pairing. Only worth using if someone is actually in the room;
-  // otherwise a stale code would beat a perfectly good tab sitting next door.
+  // 2 — A saved pairing wins outright, whether or not anyone is in the room
+  // yet.
+  //
+  // This used to require `peers > 0`, which quietly threw the pairing away
+  // every time the other half happened to be offline at that instant — open the
+  // phone before the CRT has booted and it fell through to a simulation, then
+  // sat there while the CRT came up and nobody was listening. Pairing is an
+  // explicit decision by the user; it should behave like one and simply wait.
+  // The transport reconnects with backoff and never gives up, so "the other end
+  // is not here yet" resolves itself.
   if (cloud?.relayUrl && cloud.room) {
+    // Asked only to word the status line, never to decide.
     const status = await cloudRoomStatus(cloud);
     const peers = status ? (role === "host" ? status.remotes : status.hosts) : 0;
-    if (peers > 0) {
-      return { kind: "cloud", reason: `Paired over the internet, room ${cloud.room}`, cloud };
-    }
+    return {
+      kind: "cloud",
+      reason:
+        peers > 0
+          ? `Paired over the internet, room ${cloud.room}`
+          : `Paired to room ${cloud.room} — waiting for the other half`,
+      cloud,
+    };
   }
 
   // 3 — The other half in another tab. The probe announces *our* role and

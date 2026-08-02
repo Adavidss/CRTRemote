@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useRoute } from "@/router.ts";
-import { applyConnection } from "@/state/connection.ts";
+import { applyConnection, connection } from "@/state/connection.ts";
 import { consumePairingLink } from "@/state/pairingLink.ts";
 import { applyTheme, useSettings } from "@/state/settings.ts";
 import { useKeepAwake } from "@/hooks/useKeepAwake.ts";
@@ -29,6 +29,27 @@ export default function App() {
     // Otherwise: one call, and working out *how* to reach the CRT is the
     // connection layer's job rather than something this component sequences.
     if (!consumePairingLink()) void applyConnection();
+  }, []);
+
+  // Coming back from a locked phone.
+  //
+  // The socket dies while the screen is off, and the backoff timer that would
+  // rebuild it is suspended along with everything else — so without this the
+  // remote comes back showing a stale picture and doing nothing when tapped,
+  // which reads as the pairing having been lost. Reconnect on the way back in,
+  // but only when the link is not already healthy, so glancing at another app
+  // for a second does not tear down a perfectly good socket.
+  useEffect(() => {
+    const recover = () => {
+      if (document.visibilityState !== "visible") return;
+      if (connection.store.get().transport?.status !== "connected") void applyConnection(true);
+    };
+    document.addEventListener("visibilitychange", recover);
+    window.addEventListener("online", recover);
+    return () => {
+      document.removeEventListener("visibilitychange", recover);
+      window.removeEventListener("online", recover);
+    };
   }, []);
 
   useKeepAwake(settings.keepAwake);
