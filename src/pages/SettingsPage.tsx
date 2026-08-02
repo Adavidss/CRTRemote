@@ -33,6 +33,7 @@ export function SettingsPage() {
   const [addressDraft, setAddressDraft] = useState(settings.hostAddress);
   const [portDraft, setPortDraft] = useState(String(settings.hostPort));
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   // Only for the manual-address sheet, where testing before committing turns a
   // wrong address from "nothing works" into one line of feedback.
   const [testing, setTesting] = useState(false);
@@ -321,6 +322,80 @@ export function SettingsPage() {
             label="Keep screen awake"
           />
         </Row>
+      </RowGroup>
+
+      {/* ── how any of this works ──────────────────────────────────
+          Written out here rather than left to a README nobody opens. The
+          division of labour between the two halves is genuinely unusual, and
+          "why is my phone showing a pretend television" is a fair question
+          that the interface should answer where it is asked. */}
+      <RowGroup label="How this works">
+        <Row
+          label="Setting it up"
+          detail={showHelp ? "Hide" : "Read this if nothing connects"}
+          icon="info"
+          onClick={() => setShowHelp((open) => !open)}
+        />
+        {showHelp ? (
+          <div className="flex flex-col gap-4 px-4 py-4 text-[13px] leading-relaxed text-[var(--ink-2)]">
+            <section>
+              <p className="t-label mb-1.5">The short version</p>
+              <p>
+                The CRT does everything. It draws the picture, runs the games, and keeps the pet alive whether or
+                not this phone is anywhere nearby. This app is a controller — it sends commands and shows you what
+                came back. It never simulates the CRT, so what you see here is what is really on the screen.
+              </p>
+            </section>
+
+            <section>
+              <p className="t-label mb-1.5">Connecting, in one step</p>
+              <p>
+                On the computer or Raspberry Pi running CRTHost, press{" "}
+                <span className="text-[var(--ink)]">Connect a remote…</span> and point this phone's camera at the
+                square code it shows. That is the whole setup — the link carries everything, and this app
+                configures itself when it opens.
+              </p>
+            </section>
+
+            <section>
+              <p className="t-label mb-1.5">If there is no code to scan</p>
+              <p>
+                The CRT has to be reachable from here, and that needs the relay running on the machine hosting it:{" "}
+                <span className="t-mono text-[var(--ink)]">npm run serve</span> in the CRTHost folder. It prints an
+                address; open that on this phone, on the same Wi-Fi. Nothing else needs setting.
+              </p>
+            </section>
+
+            <section>
+              <p className="t-label mb-1.5">Why the website alone is not enough</p>
+              <p>
+                A page served over <span className="t-mono">https</span> is not allowed to open a connection to a
+                plain address on your home network. That is a browser rule with no way around it, so the copy of
+                this app hosted on the web cannot reach a CRT on your Wi-Fi — it has to be served by the relay
+                itself. The exception is a CRTHost open in another tab of this same browser, which needs no network
+                at all.
+              </p>
+            </section>
+
+            <section>
+              <p className="t-label mb-1.5">What it tries, and in what order</p>
+              <p>
+                You should never have to pick one of these. On opening, it looks for a relay serving this page,
+                then a saved pairing with someone in the room, then a CRTHost in another tab — and falls back to a
+                simulation only if none of them answer, saying so rather than pretending.
+              </p>
+            </section>
+
+            <section>
+              <p className="t-label mb-1.5">The simulator</p>
+              <p>
+                A complete pretend CRT running inside this page, with its own pet and its own clock. It exists so
+                the app is worth opening before any hardware exists. Nothing it shows is real, and it is always
+                labelled.
+              </p>
+            </section>
+          </div>
+        ) : null}
       </RowGroup>
 
       {/* ── the escape hatch ───────────────────────────────────────

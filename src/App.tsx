@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRoute } from "@/router.ts";
 import { applyConnection } from "@/state/connection.ts";
+import { consumePairingLink } from "@/state/pairingLink.ts";
 import { applyTheme, useSettings } from "@/state/settings.ts";
 import { useKeepAwake } from "@/hooks/useKeepAwake.ts";
 import { BottomNav } from "@/components/BottomNav.tsx";
@@ -23,9 +24,11 @@ export default function App() {
   }, [settings.theme]);
 
   useEffect(() => {
-    // One call. Working out *how* to reach the CRT is the connection layer's
-    // job, not a thing this component sequences.
-    void applyConnection();
+    // A scanned pairing link writes the settings, which reconnects through the
+    // settings subscription — so only connect here when there was not one.
+    // Otherwise: one call, and working out *how* to reach the CRT is the
+    // connection layer's job rather than something this component sequences.
+    if (!consumePairingLink()) void applyConnection();
   }, []);
 
   useKeepAwake(settings.keepAwake);
