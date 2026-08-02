@@ -16,12 +16,23 @@ export interface RelayEndpoint {
   port: number;
   websocketUrl: string;
   httpUrl: string;
+  /**
+   * LAN addresses the relay believes it is reachable on, straight from the
+   * relay. A page cannot work these out for itself — it only knows the name it
+   * was opened under, which is usually `localhost` and of no use to a phone.
+   */
+  addresses: string[];
+  /** Whether the relay is also serving CRTRemote, at `/remote/`. */
+  servesRemote: boolean;
 }
 
 interface RelayStatus {
   ok?: boolean;
   hosts?: number;
   remotes?: number;
+  port?: number;
+  addresses?: string[];
+  serving?: { host?: boolean; remote?: boolean };
 }
 
 /** Is the page we are running from being served by a relay? */
@@ -46,6 +57,8 @@ export async function discoverRelayFromOrigin(timeoutMs = 1500): Promise<RelayEn
       port: Number(port || (protocol === "https:" ? 443 : 80)),
       websocketUrl: `${protocol === "https:" ? "wss" : "ws"}://${host}/socket`,
       httpUrl: `${protocol}//${host}`,
+      addresses: Array.isArray(body.addresses) ? body.addresses : [],
+      servesRemote: body.serving?.remote === true,
     };
   } catch {
     // Not a relay, unreachable, or too slow. All the same answer.
@@ -82,5 +95,7 @@ export function relayEndpoint(hostAddress: string, port: number): RelayEndpoint 
     port,
     websocketUrl: `ws://${host}:${port}/socket`,
     httpUrl: `http://${host}:${port}`,
+    addresses: [],
+    servesRemote: false,
   };
 }
